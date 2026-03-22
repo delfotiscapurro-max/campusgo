@@ -1,23 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapPin, Clock, Users, DollarSign, Navigation, ChevronLeft, Check, Car, Bus } from 'lucide-react'
+import { MapPin, Clock, Users, DollarSign, Navigation, ChevronLeft, Check, Car, Bus, Home } from 'lucide-react'
 import { useTrips } from '../../context/TripsContext.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Input from '../../components/ui/Input.jsx'
-import { UNIVERSITIES } from '../../data/universities.js'
 
-const NEIGHBORHOODS = [
-  'Palermo, CABA', 'Belgrano, CABA', 'Caballito, CABA', 'Almagro, CABA', 'Flores, CABA',
-  'Núñez, CABA', 'Villa del Parque, CABA', 'Colegiales, CABA', 'Villa Urquiza, CABA',
-  'San Telmo, CABA', 'La Boca, CABA', 'Recoleta, CABA', 'Barracas, CABA',
-  'Mataderos, CABA', 'Villa Lugano, CABA', 'Pompeya, CABA', 'Paternal, CABA',
-  'Villa Crespo, CABA', 'Chacarita, CABA', 'Saavedra, CABA', 'Montserrat, CABA',
-  'Ramos Mejía, GBA', 'Lomas de Zamora, GBA', 'Lanús, GBA', 'Avellaneda, GBA',
-  'Quilmes, GBA', 'Morón, GBA', 'San Justo, GBA', 'San Martín, GBA',
-  'Tres de Febrero, GBA', 'Hurlingham, GBA', 'San Isidro, GBA', 'Vicente López, GBA',
-]
-const DESTINATIONS = UNIVERSITIES.map(u => u)
 const RADII = [1, 2, 3, 5, 8, 10]
 
 export default function PublishPage() {
@@ -146,25 +134,29 @@ export default function PublishPage() {
           <div className="flex flex-col gap-4 page-enter">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700">Punto de partida</label>
-              <select
-                value={form.origin.label}
-                onChange={e => update('origin', { label: e.target.value, lat: -34.59, lng: -58.44 })}
-                className="w-full bg-white rounded-2xl border border-slate-200 px-4 py-3.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-              >
-                <option value="">Seleccioná tu barrio</option>
-                {NEIGHBORHOODS.map(n => <option key={n} value={n}>{n}</option>)}
-              </select>
+              <div className="relative">
+                <Home size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Ej: Palermo, CABA / Av. Corrientes 1234"
+                  value={form.origin.label}
+                  onChange={e => update('origin', { label: e.target.value, lat: -34.59, lng: -58.44 })}
+                  className="w-full bg-white rounded-2xl border border-slate-200 pl-10 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                />
+              </div>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700">Destino</label>
-              <select
-                value={form.destination.label}
-                onChange={e => update('destination', { label: e.target.value, lat: -34.54, lng: -58.45 })}
-                className="w-full bg-white rounded-2xl border border-slate-200 px-4 py-3.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-              >
-                <option value="">Seleccioná la universidad</option>
-                {DESTINATIONS.map(d => <option key={d} value={d}>{d}</option>)}
-              </select>
+              <div className="relative">
+                <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Ej: FIUBA, UBA Exactas, ITBA..."
+                  value={form.destination.label}
+                  onChange={e => update('destination', { label: e.target.value, lat: -34.54, lng: -58.45 })}
+                  className="w-full bg-white rounded-2xl border border-slate-200 pl-10 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                />
+              </div>
             </div>
             {form.type === 'offer' && (
               <div className="flex flex-col gap-2">

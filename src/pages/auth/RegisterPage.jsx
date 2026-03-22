@@ -5,7 +5,6 @@ import { useAuth } from '../../context/AuthContext.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Input from '../../components/ui/Input.jsx'
 
-import { UNIVERSITIES } from '../../data/universities.js'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
@@ -74,13 +73,7 @@ export default function RegisterPage() {
 
         {step === 2 && (
           <div className="flex flex-col gap-4 page-enter">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700">Universidad</label>
-              <select value={form.university} onChange={e => update('university', e.target.value)} className="w-full bg-white rounded-2xl border border-slate-200 px-4 py-3.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-300">
-                <option value="">Seleccioná tu universidad</option>
-                {UNIVERSITIES.map(u => <option key={u} value={u}>{u}</option>)}
-              </select>
-            </div>
+            <Input label="Universidad" placeholder="Ej: FIUBA, UBA Exactas, ITBA..." value={form.university} onChange={e => update('university', e.target.value)} icon={GraduationCap} />
             <Input label="Carrera" placeholder="Ej: Ingeniería en Sistemas" value={form.career} onChange={e => update('career', e.target.value)} icon={GraduationCap} />
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700">Año que cursás</label>
