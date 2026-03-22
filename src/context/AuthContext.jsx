@@ -23,22 +23,62 @@ export function AuthProvider({ children }) {
   }, [])
 
   async function loadProfile(userId) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*, reviews(reviewer_id, rating, text, created_at)')
-      .eq('id', userId)
-      .single()
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*, reviews(reviewer_id, rating, text, created_at)')
+        .eq('id', userId)
+        .single()
 
-    if (data) {
-      const profile = transformProfile(data)
-      // attach reviews with author names
-      profile.reviews = (data.reviews || []).map(r => ({
-        rating: r.rating,
-        text: r.text,
-        date: r.created_at,
-        author: 'Usuario',
-      }))
-      setUser(profile)
+      if (data) {
+        const profile = transformProfile(data)
+        profile.reviews = (data.reviews || []).map(r => ({
+          rating: r.rating,
+          text: r.text,
+          date: r.created_at,
+          author: 'Usuario',
+        }))
+        setUser(profile)
+      } else {
+        // Profile row doesn't exist yet (trigger may not have run) — use auth metadata
+        const { data: { user: authUser } } = await supabase.auth.getUser()
+        if (authUser) {
+          const meta = authUser.user_metadata || {}
+          // Try to create the profile row
+          await supabase.from('profiles').upsert({
+            id: userId,
+            name: meta.name || authUser.email?.split('@')[0] || 'Usuario',
+            email: authUser.email,
+            university: meta.university || '',
+            career: meta.career || '',
+            year: meta.year || '',
+            instagram: meta.instagram || '',
+            bio: meta.bio || '',
+            points: 100,
+          }, { onConflict: 'id' })
+          setUser({
+            id: userId,
+            name: meta.name || authUser.email?.split('@')[0] || 'Usuario',
+            email: authUser.email,
+            university: meta.university || '',
+            career: meta.career || '',
+            year: meta.year || '',
+            instagram: meta.instagram || '',
+            instagramVerified: false,
+            rating: 5.0,
+            totalRatings: 0,
+            tripsAsDriver: 0,
+            tripsAsPassenger: 0,
+            co2SavedKg: 0,
+            points: 100,
+            bio: meta.bio || '',
+            car: null,
+            reviews: [],
+          })
+        }
+      }
+    } catch (e) {
+      console.error('loadProfile error:', e)
     }
     setIsLoading(false)
   }

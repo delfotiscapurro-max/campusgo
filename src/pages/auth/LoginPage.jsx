@@ -8,8 +8,8 @@ import Input from '../../components/ui/Input.jsx'
 export default function LoginPage() {
   const navigate = useNavigate()
   const { login, isLoading } = useAuth()
-  const [email, setEmail] = useState('vlopez@fi.uba.ar')
-  const [password, setPassword] = useState('123456')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState('')
 
@@ -20,7 +20,13 @@ export default function LoginPage() {
       await login(email, password)
       navigate('/home', { replace: true })
     } catch (err) {
-      setError('Email o contraseña incorrectos')
+      if (err.message?.includes('Email not confirmed')) {
+        setError('Confirmá tu email antes de ingresar (revisá tu bandeja de entrada)')
+      } else if (err.message?.includes('Invalid login')) {
+        setError('Email o contraseña incorrectos')
+      } else {
+        setError(err.message || 'Error al iniciar sesión')
+      }
     }
   }
 
