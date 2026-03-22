@@ -22,7 +22,7 @@ const ROLE_FILTERS = [
 export default function HomePage() {
   const { user } = useAuth()
   const { getFeedTrips } = useTrips()
-  const [dateFilter, setDateFilter] = useState('today')
+  const [dateFilter, setDateFilter] = useState('all')
   const [roleFilter, setRoleFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [showSearch, setShowSearch] = useState(false)
