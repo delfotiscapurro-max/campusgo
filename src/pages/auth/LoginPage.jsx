@@ -7,7 +7,8 @@ import Input from '../../components/ui/Input.jsx'
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { login, isLoading } = useAuth()
+  const { login } = useAuth()
+  const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
@@ -16,6 +17,7 @@ export default function LoginPage() {
   async function handleLogin(e) {
     e.preventDefault()
     setError('')
+    setIsLoading(true)
     try {
       await login(email, password)
       navigate('/home', { replace: true })
@@ -27,6 +29,8 @@ export default function LoginPage() {
       } else {
         setError(err.message || 'Error al iniciar sesión')
       }
+    } finally {
+      setIsLoading(false)
     }
   }
 

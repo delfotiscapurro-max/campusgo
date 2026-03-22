@@ -12,8 +12,9 @@ const UNIVERSITIES = [
 
 export default function RegisterPage() {
   const navigate = useNavigate()
-  const { register, isLoading } = useAuth()
+  const { register } = useAuth()
   const [step, setStep] = useState(1)
+  const [isLoading, setIsLoading] = useState(false)
   const [form, setForm] = useState({
     name: '', email: '', password: '', university: '', career: '', year: '',
     instagram: '', hasCar: false,
@@ -25,10 +26,15 @@ export default function RegisterPage() {
   }
 
   async function handleSubmit() {
+    setIsLoading(true)
     try {
       await register(form)
       navigate('/home', { replace: true })
-    } catch {}
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const steps = ['Tus datos', 'Tu universidad', 'Verificación', '¿Tenés auto?']

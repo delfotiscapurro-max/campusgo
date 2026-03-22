@@ -84,14 +84,13 @@ export function AuthProvider({ children }) {
   }
 
   const login = useCallback(async (email, password) => {
-    setIsLoading(true)
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) { setIsLoading(false); throw error }
+    if (error) throw error
+    // onAuthStateChange will call loadProfile and set isLoading = false
     return data.user
   }, [])
 
   const register = useCallback(async (formData) => {
-    setIsLoading(true)
     const { name, email, password, university, career, year, instagram, hasCar, car, bio } = formData
 
     const { data, error } = await supabase.auth.signUp({
@@ -101,19 +100,45 @@ export function AuthProvider({ children }) {
         data: { name, university, career, year, instagram, bio: bio || '' }
       }
     })
-    if (error) { setIsLoading(false); throw error }
+    if (error) throw error
 
-    // Update profile with extra info (car, etc.)
+    // Upsert profile (works with or without email confirmation)
     if (data.user) {
-      await supabase.from('profiles').update({
+      await supabase.from('profiles').upsert({
+        id: data.user.id,
         name,
+        email,
         university,
         career,
         year,
-        instagram,
+        instagram: instagram || '',
         car: hasCar && car?.make ? car : null,
-        points: 100, // bienvenida
-      }).eq('id', data.user.id)
+        points: 100,
+      }, { onConflict: 'id' })
+    }
+
+    // If session exists right away (email confirmation disabled), let onAuthStateChange handle it
+    // If no session (email confirmation required), set a minimal user so the app doesn't hang
+    if (!data.session) {
+      setUser({
+        id: data.user.id,
+        name,
+        email,
+        university,
+        career,
+        year,
+        instagram: instagram || '',
+        instagramVerified: false,
+        rating: 5.0,
+        totalRatings: 0,
+        tripsAsDriver: 0,
+        tripsAsPassenger: 0,
+        co2SavedKg: 0,
+        points: 100,
+        bio: bio || '',
+        car: hasCar && car?.make ? car : null,
+        reviews: [],
+      })
     }
 
     return data.user
