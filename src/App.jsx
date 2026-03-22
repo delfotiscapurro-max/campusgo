@@ -13,6 +13,7 @@ import PublishPage from './pages/publish/PublishPage.jsx'
 import DashboardPage from './pages/dashboard/DashboardPage.jsx'
 import ProfilePage from './pages/profile/ProfilePage.jsx'
 import TripDetailPage from './pages/trip/TripDetailPage.jsx'
+import ChatPage from './pages/trip/ChatPage.jsx'
 import NotificationsPage from './pages/notifications/NotificationsPage.jsx'
 
 function LoadingScreen() {
@@ -47,6 +48,7 @@ function AppRoutes() {
         <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/profile/:userId" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/trip/:id" element={<ProtectedRoute><TripDetailPage /></ProtectedRoute>} />
+        <Route path="/trip/:id/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
@@ -57,6 +59,7 @@ function AppRoutes() {
           <Route path="/login" element={null} />
           <Route path="/register" element={null} />
           <Route path="/trip/:id" element={null} />
+          <Route path="/trip/:id/chat" element={null} />
           <Route path="*" element={<BottomNav />} />
         </Routes>
       )}

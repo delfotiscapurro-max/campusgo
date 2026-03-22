@@ -282,13 +282,18 @@ export default function TripDetailPage() {
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-width-[430px] max-w-[430px] bg-white/95 backdrop-blur border-t border-slate-100 px-4 py-4 pb-[calc(1rem+var(--safe-bottom))] flex gap-3">
         {isDriver ? (
           <>
-            <button className="flex-1 flex items-center justify-center gap-2 bg-slate-100 rounded-2xl py-3.5 text-slate-700 font-semibold text-sm press-effect">
+            <button onClick={() => navigate(`/trip/${trip.id}/chat`)} className="flex-1 flex items-center justify-center gap-2 bg-slate-100 rounded-2xl py-3.5 text-slate-700 font-semibold text-sm press-effect">
               <MessageCircle size={18} /> Chat del viaje
             </button>
           </>
         ) : isPassenger ? (
-          <div className="flex-1 bg-emerald-50 rounded-2xl py-3.5 flex items-center justify-center gap-2">
-            <span className="text-emerald-600 font-bold">✓ Confirmado en este viaje</span>
+          <div className="flex gap-3 flex-1">
+            <div className="flex-1 bg-emerald-50 rounded-2xl py-3.5 flex items-center justify-center">
+              <span className="text-emerald-600 font-bold">✓ Confirmado</span>
+            </div>
+            <button onClick={() => navigate(`/trip/${trip.id}/chat`)} className="flex-1 flex items-center justify-center gap-2 gradient-bg rounded-2xl py-3.5 text-white font-semibold text-sm press-effect">
+              <MessageCircle size={18} /> Chat
+            </button>
           </div>
         ) : hasPending || joined ? (
           <div className="flex-1 bg-amber-50 rounded-2xl py-3.5 flex items-center justify-center gap-2">
@@ -300,7 +305,7 @@ export default function TripDetailPage() {
           </div>
         ) : (
           <>
-            <button className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center press-effect flex-shrink-0">
+            <button onClick={() => navigate(`/trip/${trip.id}/chat`)} className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center press-effect flex-shrink-0">
               <MessageCircle size={20} className="text-slate-600" />
             </button>
             <Button onClick={handleJoin} loading={joinLoading} fullWidth size="lg">
