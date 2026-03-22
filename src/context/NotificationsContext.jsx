@@ -118,7 +118,7 @@ export function NotificationsProvider({ children }) {
   }, [notifications, acceptRequest, denyRequest, user])
 
   const addNotification = useCallback(async (notif) => {
-    const { data } = await supabase.from('notifications').insert({
+    const { data, error } = await supabase.from('notifications').insert({
       recipient_id: notif.recipientId,
       type: notif.type,
       trip_id: notif.tripId || null,
@@ -127,6 +127,8 @@ export function NotificationsProvider({ children }) {
       actions: notif.actions || [],
       read: false,
     }).select().single()
+
+    if (error) console.error('addNotification error:', error)
 
     // Only add to local state if it's for current user
     if (data && data.recipient_id === user?.id) {
