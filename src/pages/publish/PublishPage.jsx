@@ -5,6 +5,7 @@ import { useTrips } from '../../context/TripsContext.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Input from '../../components/ui/Input.jsx'
+import { UNIVERSITIES } from '../../data/universities.js'
 
 const RADII = [1, 2, 3, 5, 8, 10]
 
@@ -146,17 +147,15 @@ export default function PublishPage() {
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700">Destino</label>
-              <div className="relative">
-                <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Ej: FIUBA, UBA Exactas, ITBA..."
-                  value={form.destination.label}
-                  onChange={e => update('destination', { label: e.target.value, lat: -34.54, lng: -58.45 })}
-                  className="w-full bg-white rounded-2xl border border-slate-200 pl-10 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                />
-              </div>
+              <label className="text-sm font-semibold text-slate-700">Destino (universidad)</label>
+              <select
+                value={form.destination.label}
+                onChange={e => update('destination', { label: e.target.value, lat: -34.54, lng: -58.45 })}
+                className="w-full bg-white rounded-2xl border border-slate-200 px-4 py-3.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              >
+                <option value="">Seleccioná la universidad</option>
+                {UNIVERSITIES.map(u => <option key={u} value={u}>{u}</option>)}
+              </select>
             </div>
             {form.type === 'offer' && (
               <div className="flex flex-col gap-2">
