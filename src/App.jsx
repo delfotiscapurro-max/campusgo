@@ -56,6 +56,7 @@ function AppRoutes() {
         <Routes>
           <Route path="/login" element={null} />
           <Route path="/register" element={null} />
+          <Route path="/trip/:id" element={null} />
           <Route path="*" element={<BottomNav />} />
         </Routes>
       )}
