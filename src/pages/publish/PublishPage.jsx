@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapPin, Clock, Users, DollarSign, Navigation, ChevronLeft, Check, Car, Bus, Home } from 'lucide-react'
+import { MapPin, Clock, Users, DollarSign, Navigation, ChevronLeft, Check, Car, Bus } from 'lucide-react'
 import { useTrips } from '../../context/TripsContext.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Input from '../../components/ui/Input.jsx'
+import AddressInput from '../../components/ui/AddressInput.jsx'
 import { UNIVERSITIES } from '../../data/universities.js'
 
 const RADII = [1, 2, 3, 5, 8, 10]
@@ -133,19 +134,12 @@ export default function PublishPage() {
         {/* Step 2: Route */}
         {step === 2 && (
           <div className="flex flex-col gap-4 page-enter">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700">Punto de partida</label>
-              <div className="relative">
-                <Home size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Ej: Palermo, CABA / Av. Corrientes 1234"
-                  value={form.origin.label}
-                  onChange={e => update('origin', { label: e.target.value, lat: -34.59, lng: -58.44 })}
-                  className="w-full bg-white rounded-2xl border border-slate-200 pl-10 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                />
-              </div>
-            </div>
+            <AddressInput
+              label="Punto de partida"
+              placeholder="Ej: Av. Corrientes 1234, Palermo..."
+              value={form.origin.label}
+              onChange={suggestion => update('origin', suggestion)}
+            />
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700">Destino (universidad)</label>
               <select
