@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom'
-import { Bell, Check, X, Car, Star, Clock, ChevronRight } from 'lucide-react'
+import { Bell, Check, X, ChevronRight } from 'lucide-react'
 import { useNotifications } from '../../context/NotificationsContext.jsx'
-import { getUserById } from '../../data/mockUsers.js'
 import Avatar from '../../components/ui/Avatar.jsx'
 import { formatRelative } from '../../utils/dateUtils.js'
 import TopBar from '../../components/layout/TopBar.jsx'
@@ -84,7 +83,7 @@ export default function NotificationsPage() {
 }
 
 function NotificationItem({ notif, onRead, onRespond, loadingId, onNavigate }) {
-  const actor = notif.actorId ? getUserById(notif.actorId) : null
+  const actor = notif.actor || null
   const config = typeConfig[notif.type] || typeConfig.trip_reminder
 
   function handleClick() {

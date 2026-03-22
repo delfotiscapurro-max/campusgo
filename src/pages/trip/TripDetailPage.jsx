@@ -23,9 +23,21 @@ export default function TripDetailPage() {
   const [trip, setTrip] = useState(null)
   const [loadingTrip, setLoadingTrip] = useState(true)
 
+  async function refreshTrip() {
+    const { data } = await import('../../lib/supabase.js').then(m =>
+      m.supabase.from('trips').select(
+        `*, driver:profiles!trips_driver_id_fkey(id,name,avatar_url,university,instagram,instagram_verified,rating,total_ratings,trips_as_driver,trips_as_passenger,co2_saved_kg,points,bio,car),
+        trip_passengers(user_id,profiles(id,name,avatar_url,university,instagram_verified,rating,total_ratings)),
+        trip_requests(id,user_id,status,profiles(id,name,avatar_url,university,instagram_verified,rating,trips_as_passenger,bio))`
+      ).eq('id', id).single()
+    )
+    if (data) {
+      const { transformTrip } = await import('../../lib/supabase.js')
+      setTrip(transformTrip(data))
+    }
+  }
+
   useEffect(() => {
-    const cached = getTrip(id)
-    if (cached) { setTrip(cached); setLoadingTrip(false); return }
     getTripById(id).then(t => { setTrip(t); setLoadingTrip(false) })
   }, [id])
 
@@ -51,7 +63,7 @@ export default function TripDetailPage() {
   async function handleJoin() {
     setJoinLoading(true)
     await requestToJoin(trip.id, user.id)
-    addNotification({
+    await addNotification({
       recipientId: trip.driverId,
       type: 'join_request',
       tripId: trip.id,
@@ -61,18 +73,37 @@ export default function TripDetailPage() {
     })
     setJoined(true)
     setJoinLoading(false)
+    await refreshTrip()
   }
 
   async function handleAccept(userId) {
     setActionLoading(userId)
     await acceptRequest(trip.id, userId)
+    await addNotification({
+      recipientId: userId,
+      type: 'request_accepted',
+      tripId: trip.id,
+      actorId: user.id,
+      message: `${user.name} aceptó tu solicitud 🎉 ¡Ya sos parte del viaje!`,
+      actions: [],
+    })
     setActionLoading(null)
+    await refreshTrip()
   }
 
   async function handleDeny(userId) {
     setActionLoading(userId)
     await denyRequest(trip.id, userId)
+    await addNotification({
+      recipientId: userId,
+      type: 'request_denied',
+      tripId: trip.id,
+      actorId: user.id,
+      message: `${user.name} no pudo aceptarte esta vez 😕`,
+      actions: [],
+    })
     setActionLoading(null)
+    await refreshTrip()
   }
 
   return (
