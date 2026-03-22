@@ -60,6 +60,9 @@ export default function TripDetailPage() {
   const hasPending = trip.pendingRequestIds?.includes(user?.id)
   const isFull = seats.available === 0
 
+  // Debug — borrar después
+  console.log('🔍 TripDetail debug:', { userId: user?.id, driverId: trip.driverId, isDriver, isPassenger, hasPending, isFull, seats })
+
   async function handleJoin() {
     setJoinLoading(true)
     await requestToJoin(trip.id, user.id)
