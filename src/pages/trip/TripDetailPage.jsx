@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Star, Car, Users, MapPin, Clock, Leaf, MessageCircle, Share2, Instagram, Navigation, ChevronRight } from 'lucide-react'
 import { useTrips } from '../../context/TripsContext.jsx'

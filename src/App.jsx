@@ -15,13 +15,23 @@ import ProfilePage from './pages/profile/ProfilePage.jsx'
 import TripDetailPage from './pages/trip/TripDetailPage.jsx'
 import NotificationsPage from './pages/notifications/NotificationsPage.jsx'
 
+function LoadingScreen() {
+  return (
+    <div className="min-h-dvh flex items-center justify-center bg-[#f5f6ff]">
+      <div className="w-8 h-8 border-[3px] border-indigo-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+}
+
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth()
   return isAuthenticated ? children : <Navigate to="/login" replace />
 }
 
 function AppRoutes() {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, isLoading } = useAuth()
+
+  if (isLoading) return <LoadingScreen />
 
   return (
     <AppShell>
