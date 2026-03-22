@@ -61,7 +61,6 @@ export default function TripDetailPage() {
   const isFull = seats.available === 0
 
   // Debug — borrar después
-  console.log('🔍 TripDetail debug:', { userId: user?.id, driverId: trip.driverId, isDriver, isPassenger, hasPending, isFull, seats })
 
   async function handleJoin() {
     setJoinLoading(true)
@@ -278,6 +277,14 @@ export default function TripDetailPage() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* DEBUG — borrar */}
+      <div className="mx-4 mb-2 bg-yellow-100 rounded-2xl p-3 text-xs text-yellow-900 font-mono">
+        <div>userId: {user?.id?.slice(0,8)}...</div>
+        <div>driverId: {trip.driverId?.slice(0,8)}...</div>
+        <div>isDriver: {String(isDriver)} | isPax: {String(isPassenger)} | hasPending: {String(hasPending)} | isFull: {String(isFull)}</div>
+        <div>seats.available: {seats?.available}</div>
       </div>
 
       {/* Bottom action */}
