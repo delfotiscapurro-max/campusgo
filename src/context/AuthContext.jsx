@@ -14,9 +14,9 @@ export function AuthProvider({ children }) {
       else setIsLoading(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) loadProfile(session.user.id)
-      else { setUser(null); setIsLoading(false) }
+      else if (event !== 'INITIAL_SESSION') { setUser(null); setIsLoading(false) }
     })
 
     return () => subscription.unsubscribe()
@@ -102,7 +102,7 @@ export function AuthProvider({ children }) {
     })
     if (error) throw error
 
-    // Upsert profile (works with or without email confirmation)
+    // Upsert profile row
     if (data.user) {
       await supabase.from('profiles').upsert({
         id: data.user.id,
@@ -117,29 +117,28 @@ export function AuthProvider({ children }) {
       }, { onConflict: 'id' })
     }
 
-    // If session exists right away (email confirmation disabled), let onAuthStateChange handle it
-    // If no session (email confirmation required), set a minimal user so the app doesn't hang
-    if (!data.session) {
-      setUser({
-        id: data.user.id,
-        name,
-        email,
-        university,
-        career,
-        year,
-        instagram: instagram || '',
-        instagramVerified: false,
-        rating: 5.0,
-        totalRatings: 0,
-        tripsAsDriver: 0,
-        tripsAsPassenger: 0,
-        co2SavedKg: 0,
-        points: 100,
-        bio: bio || '',
-        car: hasCar && car?.make ? car : null,
-        reviews: [],
-      })
+    // Set user immediately so ProtectedRoute lets us through
+    const profile = {
+      id: data.user.id,
+      name,
+      email,
+      university,
+      career,
+      year,
+      instagram: instagram || '',
+      instagramVerified: false,
+      rating: 5.0,
+      totalRatings: 0,
+      tripsAsDriver: 0,
+      tripsAsPassenger: 0,
+      co2SavedKg: 0,
+      points: 100,
+      bio: bio || '',
+      car: hasCar && car?.make ? car : null,
+      reviews: [],
     }
+    setUser(profile)
+    setIsLoading(false)
 
     return data.user
   }, [])

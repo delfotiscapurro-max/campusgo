@@ -15,6 +15,7 @@ export default function RegisterPage() {
   const { register } = useAuth()
   const [step, setStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
   const [form, setForm] = useState({
     name: '', email: '', password: '', university: '', career: '', year: '',
     instagram: '', hasCar: false,
@@ -27,11 +28,12 @@ export default function RegisterPage() {
 
   async function handleSubmit() {
     setIsLoading(true)
+    setError('')
     try {
       await register(form)
       navigate('/home', { replace: true })
     } catch (err) {
-      console.error(err)
+      setError(err.message || 'Error al registrarse')
     } finally {
       setIsLoading(false)
     }
@@ -151,6 +153,11 @@ export default function RegisterPage() {
                   <Input label="Color" placeholder="Blanco" value={form.car.color} onChange={e => update('car', { ...form.car, color: e.target.value })} />
                   <Input label="Patente" placeholder="AB 123 CD" value={form.car.plate} onChange={e => update('car', { ...form.car, plate: e.target.value })} />
                 </div>
+              </div>
+            )}
+            {error && (
+              <div className="bg-rose-50 text-rose-600 text-sm px-4 py-3 rounded-2xl font-medium">
+                ⚠️ {error}
               </div>
             )}
             <Button onClick={handleSubmit} loading={isLoading} fullWidth size="lg">
