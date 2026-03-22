@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /c/Users/matia/campusgo && STATUS=$(git status --porcelain 2>/dev/null) && if [ -n \"$STATUS\" ]; then git add -A && git commit -m \"auto: sync changes $(date '+%Y-%m-%d %H:%M')\" && git push origin main 2>/dev/null || git push origin master 2>/dev/null || true; fi",
+            "timeout": 30,
+            "statusMessage": "Sincronizando cambios con GitHub..."
+          }
+        ]
+      }
+    ]
+  }
+}
