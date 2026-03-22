@@ -14,27 +14,38 @@ import { formatTime, formatDate } from '../../utils/dateUtils.js'
 export default function TripDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { getTrip, enrichTrip, requestToJoin, acceptRequest, denyRequest, isLoading } = useTrips()
+  const { getTrip, getTripById, enrichTrip, requestToJoin, acceptRequest, denyRequest, isLoading } = useTrips()
   const { user } = useAuth()
   const { addNotification } = useNotifications()
   const [joinLoading, setJoinLoading] = useState(false)
   const [joined, setJoined] = useState(false)
   const [actionLoading, setActionLoading] = useState(null)
+  const [trip, setTrip] = useState(null)
+  const [loadingTrip, setLoadingTrip] = useState(true)
 
-  const rawTrip = getTrip(id)
-  if (!rawTrip) return (
+  useEffect(() => {
+    const cached = getTrip(id)
+    if (cached) { setTrip(cached); setLoadingTrip(false); return }
+    getTripById(id).then(t => { setTrip(t); setLoadingTrip(false) })
+  }, [id])
+
+  if (loadingTrip) return (
+    <div className="min-h-dvh flex items-center justify-center bg-[#f5f6ff]">
+      <div className="w-8 h-8 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin" style={{borderWidth:'3px'}} />
+    </div>
+  )
+  if (!trip) return (
     <div className="page-content flex items-center justify-center">
       <TopBar back title="Viaje" />
       <p className="text-slate-500">Viaje no encontrado</p>
     </div>
   )
 
-  const trip = enrichTrip(rawTrip)
   const { driver, passengers, pendingRequests, origin, destination, departureAt, seats, price, tags, description } = trip
 
   const isDriver = user?.id === trip.driverId
-  const isPassenger = rawTrip.passengerIds?.includes(user?.id)
-  const hasPending = rawTrip.pendingRequestIds?.includes(user?.id)
+  const isPassenger = trip.passengerIds?.includes(user?.id)
+  const hasPending = trip.pendingRequestIds?.includes(user?.id)
   const isFull = seats.available === 0
 
   async function handleJoin() {

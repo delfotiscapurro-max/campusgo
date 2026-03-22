@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Star, Car, Instagram, Settings, LogOut, Trophy, Leaf, Edit3, ChevronRight, Check, Shield } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext.jsx'
-import { getUserById, mockUsers } from '../../data/mockUsers.js'
+import { supabase, transformProfile } from '../../lib/supabase.js'
 import Avatar from '../../components/ui/Avatar.jsx'
 import Badge from '../../components/ui/Badge.jsx'
 import Button from '../../components/ui/Button.jsx'
@@ -18,7 +18,15 @@ export default function ProfilePage() {
   const [tab, setTab] = useState('info')
 
   const isOwnProfile = !userId || userId === currentUser?.id
-  const profileUser = isOwnProfile ? currentUser : (getUserById(userId) || mockUsers[1])
+  const [otherUser, setOtherUser] = useState(null)
+  const profileUser = isOwnProfile ? currentUser : otherUser
+
+  useEffect(() => {
+    if (!isOwnProfile && userId) {
+      supabase.from('profiles').select('*, reviews(reviewer_id, rating, text, created_at)').eq('id', userId).single()
+        .then(({ data }) => { if (data) setOtherUser(transformProfile(data)) })
+    }
+  }, [userId, isOwnProfile])
 
   const handleLogout = () => {
     logout()

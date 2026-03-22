@@ -1,11 +1,9 @@
 import { useTrips } from '../../context/TripsContext.jsx'
-import { mockUsers } from '../../data/mockUsers.js'
 
 export default function StoriesBar() {
   const { getFeedTrips } = useTrips()
   const trips = getFeedTrips()
 
-  // Get unique active drivers
   const activeDrivers = []
   const seen = new Set()
   for (const trip of trips) {
@@ -14,6 +12,8 @@ export default function StoriesBar() {
       activeDrivers.push(trip.driver)
     }
   }
+
+  if (activeDrivers.length === 0) return null
 
   return (
     <div className="flex gap-3 px-4 overflow-x-auto hide-scrollbar pb-1">
@@ -32,7 +32,7 @@ export default function StoriesBar() {
             </div>
           </div>
           <span className="text-[11px] text-slate-600 font-medium w-16 text-center truncate">
-            {driver.firstName || driver.name.split(' ')[0]}
+            {driver.firstName || driver.name?.split(' ')[0]}
           </span>
         </div>
       ))}

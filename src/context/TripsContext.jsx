@@ -1,127 +1,220 @@
-import React, { createContext, useContext, useState, useCallback } from 'react'
-import { mockTrips } from '../data/mockTrips.js'
-import { mockUsers } from '../data/mockUsers.js'
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
+import { supabase, transformTrip, TRIP_SELECT } from '../lib/supabase.js'
+import { useAuth } from './AuthContext.jsx'
 
 const TripsContext = createContext(null)
 
 export function TripsProvider({ children }) {
-  const [trips, setTrips] = useState(mockTrips)
+  const { user } = useAuth()
+  const [trips, setTrips] = useState([])
+  const [myTrips, setMyTrips] = useState([])
   const [isLoading, setIsLoading] = useState(false)
-  const [filter, setFilter] = useState({ role: 'all', date: 'today', radiusKm: 5 })
 
-  const getTrip = useCallback((id) => trips.find((t) => t.id === id), [trips])
+  // Load feed trips on mount
+  useEffect(() => {
+    loadFeed()
+  }, [])
 
-  const enrichTrip = useCallback(
-    (trip) => ({
-      ...trip,
-      driver: trip.driverId ? mockUsers.find((u) => u.id === trip.driverId) : null,
-      passengers: (trip.passengerIds || []).map((id) => mockUsers.find((u) => u.id === id)).filter(Boolean),
-      pendingRequests: (trip.pendingRequestIds || []).map((id) => mockUsers.find((u) => u.id === id)).filter(Boolean),
-    }),
-    []
-  )
+  // Load my trips when user changes
+  useEffect(() => {
+    if (user?.id) loadMyTrips()
+  }, [user?.id])
 
-  const getFeedTrips = useCallback(() => {
-    const now = new Date()
-    return trips
-      .filter((t) => new Date(t.departureAt) > now && t.status !== 'completed')
-      .map(enrichTrip)
-      .sort((a, b) => new Date(a.departureAt) - new Date(b.departureAt))
-  }, [trips, enrichTrip])
+  async function loadFeed() {
+    setIsLoading(true)
+    const { data, error } = await supabase
+      .from('trips')
+      .select(TRIP_SELECT)
+      .in('status', ['open', 'full'])
+      .gt('departure_at', new Date().toISOString())
+      .order('departure_at', { ascending: true })
+      .limit(30)
 
-  const getUserTrips = useCallback(
-    (userId) =>
-      trips
-        .filter(
-          (t) =>
-            t.driverId === userId ||
-            (t.passengerIds || []).includes(userId) ||
-            t.passengerId === userId
-        )
-        .map(enrichTrip)
-        .sort((a, b) => new Date(b.departureAt) - new Date(a.departureAt)),
-    [trips, enrichTrip]
-  )
+    if (data) setTrips(data.map(transformTrip))
+    setIsLoading(false)
+  }
+
+  async function loadMyTrips() {
+    if (!user?.id) return
+    const { data: asDrv } = await supabase
+      .from('trips')
+      .select(TRIP_SELECT)
+      .eq('driver_id', user.id)
+      .order('departure_at', { ascending: false })
+
+    const { data: asPax } = await supabase
+      .from('trip_passengers')
+      .select(`trip_id, trips(${TRIP_SELECT})`)
+      .eq('user_id', user.id)
+
+    const driverTrips = (asDrv || []).map(transformTrip)
+    const passengerTrips = (asPax || [])
+      .map(r => r.trips)
+      .filter(Boolean)
+      .map(transformTrip)
+
+    // Merge deduplicated
+    const seen = new Set()
+    const all = [...driverTrips, ...passengerTrips].filter(t => {
+      if (seen.has(t.id)) return false
+      seen.add(t.id)
+      return true
+    }).sort((a, b) => new Date(b.departureAt) - new Date(a.departureAt))
+
+    setMyTrips(all)
+  }
+
+  const getTrip = useCallback((id) => {
+    return trips.find(t => t.id === id) || myTrips.find(t => t.id === id)
+  }, [trips, myTrips])
+
+  // For backward compat — data is already enriched from Supabase
+  const enrichTrip = useCallback((trip) => trip, [])
+
+  const getFeedTrips = useCallback(() => trips, [trips])
+
+  const getUserTrips = useCallback((userId) => {
+    if (userId === user?.id) return myTrips
+    return [...trips, ...myTrips].filter(t =>
+      t.driverId === userId || t.passengerIds?.includes(userId)
+    )
+  }, [myTrips, trips, user?.id])
+
+  const getTripById = useCallback(async (id) => {
+    // First check cache
+    const cached = getTrip(id)
+    if (cached) return cached
+
+    // Fetch from Supabase
+    const { data } = await supabase
+      .from('trips')
+      .select(TRIP_SELECT)
+      .eq('id', id)
+      .single()
+
+    return data ? transformTrip(data) : null
+  }, [getTrip])
 
   const publishTrip = useCallback(async (tripData, userId) => {
     setIsLoading(true)
-    await new Promise((r) => setTimeout(r, 1000))
-    const newTrip = {
-      id: 'trip_' + Date.now(),
+    const row = {
       type: tripData.type || 'offer',
-      driverId: tripData.type !== 'request' ? userId : null,
-      passengerId: tripData.type === 'request' ? userId : null,
+      driver_id: tripData.type !== 'request' ? userId : null,
+      passenger_id: tripData.type === 'request' ? userId : null,
       origin: tripData.origin,
       destination: tripData.destination,
-      departureAt: tripData.departureAt,
-      seats: tripData.seats,
-      radiusKm: tripData.radiusKm || 2,
+      departure_at: tripData.departureAt,
+      seats_total: tripData.seats?.total || 3,
+      seats_available: tripData.seats?.available || 3,
+      radius_km: tripData.radiusKm || 2,
       price: tripData.price || 0,
       description: tripData.description || '',
       tags: tripData.tags || [],
-      passengerIds: [],
-      pendingRequestIds: [],
       status: 'open',
-      co2SavedKg: 0,
-      createdAt: new Date().toISOString(),
+      co2_saved_kg: 0,
     }
-    setTrips((prev) => [newTrip, ...prev])
+
+    const { data, error } = await supabase
+      .from('trips')
+      .insert(row)
+      .select(TRIP_SELECT)
+      .single()
+
+    if (data) {
+      const newTrip = transformTrip(data)
+      setTrips(prev => [newTrip, ...prev])
+      setMyTrips(prev => [newTrip, ...prev])
+
+      // Award points for publishing
+      await supabase.from('profiles')
+        .update({ points: (user?.points || 0) + 50 })
+        .eq('id', userId)
+
+      setIsLoading(false)
+      return newTrip
+    }
     setIsLoading(false)
-    return newTrip
-  }, [])
+    throw error
+  }, [user])
 
   const requestToJoin = useCallback(async (tripId, userId) => {
-    setIsLoading(true)
-    await new Promise((r) => setTimeout(r, 700))
-    setTrips((prev) =>
-      prev.map((t) =>
+    const { error } = await supabase
+      .from('trip_requests')
+      .upsert({ trip_id: tripId, user_id: userId, status: 'pending' })
+
+    if (!error) {
+      // Optimistic update
+      setTrips(prev => prev.map(t =>
         t.id === tripId && !t.pendingRequestIds.includes(userId)
           ? { ...t, pendingRequestIds: [...t.pendingRequestIds, userId] }
           : t
-      )
-    )
-    setIsLoading(false)
+      ))
+    }
   }, [])
 
   const acceptRequest = useCallback(async (tripId, userId) => {
-    await new Promise((r) => setTimeout(r, 500))
-    setTrips((prev) =>
-      prev.map((t) => {
-        if (t.id !== tripId) return t
-        const newAvailable = Math.max(0, t.seats.available - 1)
-        return {
-          ...t,
-          pendingRequestIds: t.pendingRequestIds.filter((id) => id !== userId),
-          passengerIds: [...t.passengerIds, userId],
-          seats: { ...t.seats, available: newAvailable },
-          status: newAvailable === 0 ? 'full' : t.status,
-        }
-      })
-    )
-  }, [])
+    // 1. Update request status
+    await supabase.from('trip_requests')
+      .update({ status: 'accepted' })
+      .eq('trip_id', tripId)
+      .eq('user_id', userId)
+
+    // 2. Add to trip_passengers
+    await supabase.from('trip_passengers')
+      .upsert({ trip_id: tripId, user_id: userId })
+
+    // 3. Decrement available seats
+    const trip = getTrip(tripId)
+    if (trip) {
+      const newAvailable = Math.max(0, trip.seats.available - 1)
+      await supabase.from('trips')
+        .update({
+          seats_available: newAvailable,
+          status: newAvailable === 0 ? 'full' : 'open'
+        })
+        .eq('id', tripId)
+
+      // 4. Update passenger trip count
+      await supabase.from('profiles')
+        .update({ trips_as_passenger: (await supabase.from('profiles').select('trips_as_passenger').eq('id', userId).single()).data?.trips_as_passenger + 1 || 1 })
+        .eq('id', userId)
+    }
+
+    // Refresh feed
+    await loadFeed()
+    if (user?.id) await loadMyTrips()
+  }, [getTrip, user])
 
   const denyRequest = useCallback(async (tripId, userId) => {
-    await new Promise((r) => setTimeout(r, 500))
-    setTrips((prev) =>
-      prev.map((t) =>
-        t.id === tripId
-          ? { ...t, pendingRequestIds: t.pendingRequestIds.filter((id) => id !== userId) }
-          : t
-      )
-    )
+    await supabase.from('trip_requests')
+      .update({ status: 'denied' })
+      .eq('trip_id', tripId)
+      .eq('user_id', userId)
+
+    setTrips(prev => prev.map(t =>
+      t.id === tripId
+        ? { ...t, pendingRequestIds: t.pendingRequestIds.filter(id => id !== userId) }
+        : t
+    ))
   }, [])
 
   const cancelTrip = useCallback(async (tripId) => {
-    await new Promise((r) => setTimeout(r, 600))
-    setTrips((prev) =>
-      prev.map((t) => (t.id === tripId ? { ...t, status: 'cancelled' } : t))
-    )
+    await supabase.from('trips')
+      .update({ status: 'cancelled' })
+      .eq('id', tripId)
+
+    setTrips(prev => prev.map(t => t.id === tripId ? { ...t, status: 'cancelled' } : t))
+    setMyTrips(prev => prev.map(t => t.id === tripId ? { ...t, status: 'cancelled' } : t))
   }, [])
 
   return (
-    <TripsContext.Provider
-      value={{ trips, isLoading, filter, setFilter, getTrip, enrichTrip, getFeedTrips, getUserTrips, publishTrip, requestToJoin, acceptRequest, denyRequest, cancelTrip }}
-    >
+    <TripsContext.Provider value={{
+      trips, myTrips, isLoading,
+      getTrip, getTripById, enrichTrip,
+      getFeedTrips, getUserTrips,
+      publishTrip, requestToJoin, acceptRequest, denyRequest, cancelTrip,
+      loadFeed, loadMyTrips,
+    }}>
       {children}
     </TripsContext.Provider>
   )
