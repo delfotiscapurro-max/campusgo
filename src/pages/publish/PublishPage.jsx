@@ -5,17 +5,19 @@ import { useTrips } from '../../context/TripsContext.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Input from '../../components/ui/Input.jsx'
+import { UNIVERSITIES } from '../../data/universities.js'
 
 const NEIGHBORHOODS = [
   'Palermo, CABA', 'Belgrano, CABA', 'Caballito, CABA', 'Almagro, CABA', 'Flores, CABA',
   'Núñez, CABA', 'Villa del Parque, CABA', 'Colegiales, CABA', 'Villa Urquiza, CABA',
   'San Telmo, CABA', 'La Boca, CABA', 'Recoleta, CABA', 'Barracas, CABA',
+  'Mataderos, CABA', 'Villa Lugano, CABA', 'Pompeya, CABA', 'Paternal, CABA',
+  'Villa Crespo, CABA', 'Chacarita, CABA', 'Saavedra, CABA', 'Montserrat, CABA',
+  'Ramos Mejía, GBA', 'Lomas de Zamora, GBA', 'Lanús, GBA', 'Avellaneda, GBA',
+  'Quilmes, GBA', 'Morón, GBA', 'San Justo, GBA', 'San Martín, GBA',
+  'Tres de Febrero, GBA', 'Hurlingham, GBA', 'San Isidro, GBA', 'Vicente López, GBA',
 ]
-const DESTINATIONS = [
-  'Ciudad Universitaria, UBA', 'FIUBA, Paseo Colón', 'UTN FRBA, Medrano',
-  'UBA Económicas, Uriburu', 'UBA Medicina, Paraguay', 'UBA Exactas, Pabellones',
-  'UNSAM, Gral. San Martín', 'UNTREF, Tres de Febrero', 'UADE, Lima',
-]
+const DESTINATIONS = UNIVERSITIES.map(u => u)
 const RADII = [1, 2, 3, 5, 8, 10]
 
 export default function PublishPage() {

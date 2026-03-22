@@ -5,10 +5,7 @@ import { useAuth } from '../../context/AuthContext.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Input from '../../components/ui/Input.jsx'
 
-const UNIVERSITIES = [
-  'UBA - Ingeniería', 'UBA - Exactas', 'UBA - Económicas', 'UBA - Medicina', 'UBA - Derecho', 'UBA - Psicología',
-  'UTN - FRBA', 'UTN - FRC', 'UTN - FRR', 'UNLP - Ingeniería', 'UNC - FCEFyN', 'UNSAM', 'UNTREF', 'UADE', 'UNLAM',
-]
+import { UNIVERSITIES } from '../../data/universities.js'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
