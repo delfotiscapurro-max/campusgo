@@ -1,110 +1,137 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapPin, Navigation, Filter } from 'lucide-react'
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet'
+import L from 'leaflet'
 import { useTrips } from '../../context/TripsContext.jsx'
 import TopBar from '../../components/layout/TopBar.jsx'
 import Avatar from '../../components/ui/Avatar.jsx'
 import { formatTime } from '../../utils/dateUtils.js'
 
-// Simulated map positions (percentage-based within a "map" div)
-const MAP_POSITIONS = [
-  { id: 't1', x: 60, y: 35 },
-  { id: 't2', x: 38, y: 52 },
-  { id: 't3', x: 50, y: 58 },
-  { id: 't4', x: 62, y: 22 },
-  { id: 't5', x: 58, y: 30 },
-  { id: 't6', x: 30, y: 65 },
-  { id: 't7', x: 44, y: 38 },
-]
+// Fix Leaflet default marker icons
+delete L.Icon.Default.prototype._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+})
 
+function createTripIcon(trip, isSelected) {
+  const emoji = trip.type === 'offer' ? '🚗' : '🙋'
+  const bg = isSelected ? '#6366f1' : (trip.type === 'offer' ? '#6366f1' : '#7c3aed')
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      background:${bg};
+      width:${isSelected ? 44 : 36}px;
+      height:${isSelected ? 44 : 36}px;
+      border-radius:50%;
+      border:3px solid white;
+      box-shadow:0 2px 8px rgba(0,0,0,0.25);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:${isSelected ? '20px' : '16px'};
+      transition:all 0.2s;
+    ">${emoji}</div>`,
+    iconSize: [isSelected ? 44 : 36, isSelected ? 44 : 36],
+    iconAnchor: [isSelected ? 22 : 18, isSelected ? 44 : 36],
+  })
+}
+
+const userIcon = L.divIcon({
+  className: '',
+  html: `<div style="
+    background:#6366f1;
+    width:18px;height:18px;
+    border-radius:50%;
+    border:3px solid white;
+    box-shadow:0 2px 8px rgba(99,102,241,0.5);
+  "></div>`,
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
+})
+
+// Buenos Aires center as default
+const DEFAULT_CENTER = [-34.6037, -58.3816]
 const RADII = [1, 2, 5, 10]
+
+function RecenterMap({ center }) {
+  const map = useMap()
+  useEffect(() => { map.setView(center, map.getZoom()) }, [center])
+  return null
+}
 
 export default function DiscoverPage() {
   const navigate = useNavigate()
   const { getFeedTrips } = useTrips()
   const [selectedRadius, setSelectedRadius] = useState(5)
   const [selectedTrip, setSelectedTrip] = useState(null)
+  const [userPos, setUserPos] = useState(DEFAULT_CENTER)
 
   const trips = getFeedTrips()
-
   const selectedTripData = trips.find(t => t.id === selectedTrip)
+
+  useEffect(() => {
+    navigator.geolocation?.getCurrentPosition(
+      pos => setUserPos([pos.coords.latitude, pos.coords.longitude]),
+      () => {} // fallback to Buenos Aires
+    )
+  }, [])
+
+  // Assign fixed coords to trips (use origin coords if available, else scatter around user)
+  function getTripCoords(trip, index) {
+    if (trip.origin?.lat && trip.origin?.lng) return [trip.origin.lat, trip.origin.lng]
+    const angle = (index / trips.length) * 2 * Math.PI
+    const dist = 0.01 + (index % 3) * 0.008
+    return [userPos[0] + Math.cos(angle) * dist, userPos[1] + Math.sin(angle) * dist]
+  }
 
   return (
     <div className="page-content">
       <TopBar title="Explorar" />
       <div className="page-enter">
-        {/* Map area */}
-        <div className="relative mx-4 mt-4 rounded-3xl overflow-hidden" style={{ height: '320px' }}>
-          {/* Fake map background */}
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #e8edf5 0%, #d4dff0 100%)' }}>
-            {/* Grid lines to simulate map */}
-            <svg width="100%" height="100%" className="opacity-30">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <line key={`h${i}`} x1="0" y1={`${(i + 1) * 12.5}%`} x2="100%" y2={`${(i + 1) * 12.5}%`} stroke="#94a3b8" strokeWidth="1" />
-              ))}
-              {Array.from({ length: 8 }).map((_, i) => (
-                <line key={`v${i}`} x1={`${(i + 1) * 12.5}%`} y1="0" x2={`${(i + 1) * 12.5}%`} y2="100%" stroke="#94a3b8" strokeWidth="1" />
-              ))}
-            </svg>
+        {/* Real map */}
+        <div className="mx-4 mt-4 rounded-3xl overflow-hidden" style={{ height: '320px' }}>
+          <MapContainer
+            center={userPos}
+            zoom={13}
+            style={{ height: '100%', width: '100%' }}
+            zoomControl={false}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <RecenterMap center={userPos} />
 
-            {/* Roads simulation */}
-            <svg width="100%" height="100%" className="absolute inset-0">
-              <path d="M 0,45% Q 30%,40% 50%,50% T 100%,45%" stroke="#b0b9d0" strokeWidth="6" fill="none" />
-              <path d="M 0,65% Q 30%,60% 60%,65% T 100%,60%" stroke="#b0b9d0" strokeWidth="4" fill="none" />
-              <path d="M 40%,0 Q 45%,40% 50%,50% T 45%,100%" stroke="#b0b9d0" strokeWidth="5" fill="none" />
-              <path d="M 0,45% Q 30%,40% 50%,50% T 100%,45%" stroke="#c8d0e0" strokeWidth="3" fill="none" />
-            </svg>
-          </div>
+            {/* User location */}
+            <Marker position={userPos} icon={userIcon} />
+            <Circle
+              center={userPos}
+              radius={selectedRadius * 1000}
+              pathOptions={{ color: '#6366f1', fillColor: '#6366f1', fillOpacity: 0.08, weight: 2 }}
+            />
 
-          {/* User location */}
-          <div className="absolute" style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
-            <div className="relative">
-              <div className="w-5 h-5 bg-indigo-600 rounded-full border-3 border-white shadow-lg z-10 relative" style={{ borderWidth: '3px' }} />
-              {/* Radius ring */}
-              <div
-                className="absolute rounded-full bg-indigo-400/10 border-2 border-indigo-400/30"
-                style={{
-                  width: `${selectedRadius * 18}px`,
-                  height: `${selectedRadius * 18}px`,
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Trip markers */}
-          {trips.slice(0, 7).map((trip, i) => {
-            const pos = MAP_POSITIONS[i] || { x: 50 + (i * 7) % 30, y: 40 + (i * 11) % 30 }
-            const isSelected = selectedTrip === trip.id
-            return (
-              <button
+            {/* Trip markers */}
+            {trips.slice(0, 10).map((trip, i) => (
+              <Marker
                 key={trip.id}
-                onClick={() => setSelectedTrip(isSelected ? null : trip.id)}
-                className={`absolute press-effect z-20 transition-transform ${isSelected ? 'scale-110' : ''}`}
-                style={{ left: `${pos.x}%`, top: `${pos.y}%`, transform: `translate(-50%, -100%) ${isSelected ? 'scale(1.1)' : ''}` }}
+                position={getTripCoords(trip, i)}
+                icon={createTripIcon(trip, selectedTrip === trip.id)}
+                eventHandlers={{ click: () => setSelectedTrip(selectedTrip === trip.id ? null : trip.id) }}
               >
-                {isSelected ? (
-                  <div className="gradient-bg text-white rounded-2xl px-3 py-2 text-xs font-bold shadow-lg whitespace-nowrap">
-                    <div className="flex items-center gap-1">
-                      <img src={trip.driver?.avatar} alt="" className="w-5 h-5 rounded-full" onError={e => e.target.style.display = 'none'} />
-                      <span>{formatTime(trip.departureAt)}</span>
+                <Popup>
+                  <div style={{ minWidth: 140 }}>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>{trip.driver?.name}</div>
+                    <div style={{ fontSize: 12, color: '#64748b' }}>{trip.origin?.label} → {trip.destination?.label}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: '#6366f1', marginTop: 4 }}>
+                      {formatTime(trip.departureAt)} · ${trip.price?.toLocaleString()}
                     </div>
-                    <div className="text-[10px] opacity-80">${trip.price.toLocaleString()} · {trip.seats.available} asientos</div>
-                    <div className="absolute bottom-0 left-1/2 w-2 h-2 gradient-bg rotate-45 -translate-x-1/2 translate-y-1/2" />
                   </div>
-                ) : (
-                  <div className={`w-9 h-9 rounded-full border-3 border-white shadow-md flex items-center justify-center ${trip.type === 'offer' ? 'gradient-bg' : 'bg-violet-500'}`} style={{ borderWidth: '3px' }}>
-                    <span className="text-base">{trip.type === 'offer' ? '🚗' : '🙋'}</span>
-                  </div>
-                )}
-              </button>
-            )
-          })}
-
-          {/* Map overlay gradient */}
-          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#f5f6ff] to-transparent pointer-events-none" />
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
         </div>
 
         {/* Radius selector */}
@@ -152,8 +179,8 @@ export default function DiscoverPage() {
           </div>
         )}
 
-        {/* Trip list below map */}
-        <div className="px-4">
+        {/* Trip list */}
+        <div className="px-4 pb-4">
           <div className="flex items-center justify-between mb-3">
             <p className="font-semibold text-slate-800 text-sm">{trips.length} viajes cerca tuyo</p>
           </div>
