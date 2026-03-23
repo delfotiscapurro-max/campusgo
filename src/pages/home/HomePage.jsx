@@ -25,7 +25,7 @@ const SORT_OPTIONS = [
   { key: 'rating', label: '⭐ Mejor conductor' },
 ]
 
-const MAX_PRICE_SLIDER = 3000
+const MAX_PRICE_SLIDER = 30000
 
 const SEAT_OPTIONS = [
   { key: 0, label: 'Cualquiera' },
@@ -264,7 +264,7 @@ export default function HomePage() {
                     type="range"
                     min={0}
                     max={MAX_PRICE_SLIDER}
-                    step={100}
+                    step={500}
                     value={maxPrice}
                     onChange={e => setMaxPrice(Number(e.target.value))}
                     className="w-full h-2 rounded-full appearance-none cursor-pointer"
