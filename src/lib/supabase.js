@@ -19,7 +19,7 @@ export function transformProfile(raw) {
     year: raw.year,
     instagram: raw.instagram,
     instagramVerified: raw.instagram_verified,
-    rating: parseFloat(raw.rating) || 5.0,
+    rating: raw.rating != null ? parseFloat(raw.rating) : null,
     totalRatings: raw.total_ratings || 0,
     tripsAsDriver: raw.trips_as_driver || 0,
     tripsAsPassenger: raw.trips_as_passenger || 0,

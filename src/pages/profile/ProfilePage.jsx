@@ -175,11 +175,17 @@ export default function ProfilePage() {
           {/* Rating + badges */}
           <div className="flex items-center gap-3 mt-3">
             <div className="flex items-center gap-1.5 bg-white/20 px-3 py-1.5 rounded-full">
-              {[1,2,3,4,5].map(i => (
-                <Star key={i} size={12} className={i <= Math.round(profileUser?.rating || 0) ? 'text-amber-300 fill-amber-300' : 'text-white/30 fill-white/30'} />
-              ))}
-              <span className="text-white font-bold text-sm ml-1">{profileUser?.rating?.toFixed(1)}</span>
-              <span className="text-indigo-200 text-xs">({profileUser?.totalRatings})</span>
+              {profileUser?.rating != null ? (
+                <>
+                  {[1,2,3,4,5].map(i => (
+                    <Star key={i} size={12} className={i <= Math.round(profileUser.rating) ? 'text-amber-300 fill-amber-300' : 'text-white/30 fill-white/30'} />
+                  ))}
+                  <span className="text-white font-bold text-sm ml-1">{Math.round(profileUser.rating / 5 * 100)}%</span>
+                  <span className="text-indigo-200 text-xs">({profileUser.totalRatings})</span>
+                </>
+              ) : (
+                <span className="text-indigo-200 text-xs">Sin reseñas aún</span>
+              )}
             </div>
             {profileUser?.instagramVerified && (
               <div className="bg-gradient-to-r from-pink-500 to-violet-600 px-3 py-1.5 rounded-full flex items-center gap-1">

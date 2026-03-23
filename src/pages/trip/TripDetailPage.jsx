@@ -9,7 +9,9 @@ import Avatar from '../../components/ui/Avatar.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Badge from '../../components/ui/Badge.jsx'
 import RequestRow from '../../components/trip/RequestRow.jsx'
+import ReviewModal from '../../components/trip/ReviewModal.jsx'
 import { formatTime, formatDate } from '../../utils/dateUtils.js'
+import { supabase } from '../../lib/supabase.js'
 
 export default function TripDetailPage() {
   const { id } = useParams()
@@ -22,6 +24,8 @@ export default function TripDetailPage() {
   const [actionLoading, setActionLoading] = useState(null)
   const [trip, setTrip] = useState(null)
   const [loadingTrip, setLoadingTrip] = useState(true)
+  const [reviewModal, setReviewModal] = useState(null) // { reviewee }
+  const [reviewedIds, setReviewedIds] = useState([])
 
   async function refreshTrip() {
     const { data } = await import('../../lib/supabase.js').then(m =>
@@ -41,6 +45,12 @@ export default function TripDetailPage() {
     getTripById(id).then(t => { setTrip(t); setLoadingTrip(false) })
   }, [id])
 
+  useEffect(() => {
+    if (!user?.id || !id) return
+    supabase.from('reviews').select('reviewee_id').eq('reviewer_id', user.id).eq('trip_id', id)
+      .then(({ data }) => { if (data) setReviewedIds(data.map(r => r.reviewee_id)) })
+  }, [user?.id, id])
+
   if (loadingTrip) return (
     <div className="min-h-dvh flex items-center justify-center bg-[#f5f6ff]">
       <div className="w-8 h-8 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin" style={{borderWidth:'3px'}} />
@@ -59,6 +69,9 @@ export default function TripDetailPage() {
   const isPassenger = trip.passengerIds?.includes(user?.id)
   const hasPending = trip.pendingRequestIds?.includes(user?.id)
   const isFull = seats.available === 0
+  const isPast = new Date(trip.departureAt) < new Date()
+  const canReviewDriver = isPast && isPassenger && driver && !reviewedIds.includes(driver.id)
+  const reviewablePassengers = isPast && isDriver ? passengers.filter(p => !reviewedIds.includes(p.id)) : []
 
 
   async function handleJoin(role = 'passenger') {
@@ -192,11 +205,17 @@ export default function TripDetailPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-1 mt-1">
-                  {[1,2,3,4,5].map(i => (
-                    <Star key={i} size={13} className={i <= Math.round(driver.rating) ? 'text-amber-400 fill-amber-400' : 'text-slate-200 fill-slate-200'} />
-                  ))}
-                  <span className="text-sm font-semibold text-slate-600 ml-1">{driver.rating?.toFixed(1)}</span>
-                  <span className="text-xs text-slate-400">({driver.totalRatings})</span>
+                  {driver.rating != null ? (
+                    <>
+                      {[1,2,3,4,5].map(i => (
+                        <Star key={i} size={13} className={i <= Math.round(driver.rating) ? 'text-amber-400 fill-amber-400' : 'text-slate-200 fill-slate-200'} />
+                      ))}
+                      <span className="text-sm font-semibold text-slate-600 ml-1">{Math.round(driver.rating / 5 * 100)}%</span>
+                      <span className="text-xs text-slate-400">({driver.totalRatings})</span>
+                    </>
+                  ) : (
+                    <span className="text-xs text-slate-400">Sin reseñas aún</span>
+                  )}
                 </div>
                 <p className="text-xs text-slate-500 mt-1">{driver.university}</p>
               </div>
@@ -254,9 +273,24 @@ export default function TripDetailPage() {
                     <p className="text-sm font-semibold text-slate-700">{p.name}</p>
                     <p className="text-xs text-slate-400">{p.university?.split(' - ')[1]}</p>
                   </div>
-                  <div className="ml-auto flex items-center gap-1">
-                    <Star size={11} className="text-amber-400 fill-amber-400" />
-                    <span className="text-xs text-slate-500">{p.rating?.toFixed(1)}</span>
+                  <div className="ml-auto flex items-center gap-2">
+                    {p.rating != null && (
+                      <div className="flex items-center gap-1">
+                        <Star size={11} className="text-amber-400 fill-amber-400" />
+                        <span className="text-xs text-slate-500">{p.rating?.toFixed(1)}</span>
+                      </div>
+                    )}
+                    {isDriver && isPast && !reviewedIds.includes(p.id) && (
+                      <button
+                        onClick={() => setReviewModal({ reviewee: p })}
+                        className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full press-effect"
+                      >
+                        Calificar
+                      </button>
+                    )}
+                    {isDriver && reviewedIds.includes(p.id) && (
+                      <span className="text-xs text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">✓ Calificado</span>
+                    )}
                   </div>
                 </div>
               ))}
@@ -285,6 +319,14 @@ export default function TripDetailPage() {
         )}
       </div>
 
+      <ReviewModal
+        isOpen={!!reviewModal}
+        onClose={() => setReviewModal(null)}
+        reviewee={reviewModal?.reviewee}
+        tripId={trip.id}
+        onReviewed={() => setReviewedIds(prev => [...prev, reviewModal?.reviewee?.id])}
+      />
+
       {/* Bottom action */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-width-[430px] max-w-[430px] bg-white/95 backdrop-blur border-t border-slate-100 px-4 py-4 pb-[calc(1rem+var(--safe-bottom))] flex gap-3">
         {isDriver ? (
@@ -295,12 +337,24 @@ export default function TripDetailPage() {
           </>
         ) : isPassenger ? (
           <div className="flex gap-3 flex-1">
-            <div className="flex-1 bg-emerald-50 rounded-2xl py-3.5 flex items-center justify-center">
-              <span className="text-emerald-600 font-bold">✓ Confirmado</span>
-            </div>
-            <button onClick={() => navigate(`/trip/${trip.id}/chat`)} className="flex-1 flex items-center justify-center gap-2 gradient-bg rounded-2xl py-3.5 text-white font-semibold text-sm press-effect">
-              <MessageCircle size={18} /> Chat
-            </button>
+            {canReviewDriver ? (
+              <Button onClick={() => setReviewModal({ reviewee: driver })} fullWidth size="lg" variant="secondary">
+                ⭐ Calificar conductor
+              </Button>
+            ) : isPassenger && isPast && !canReviewDriver && driver ? (
+              <div className="flex-1 bg-emerald-50 rounded-2xl py-3.5 flex items-center justify-center">
+                <span className="text-emerald-600 font-bold">✓ Calificado</span>
+              </div>
+            ) : (
+              <div className="flex-1 bg-emerald-50 rounded-2xl py-3.5 flex items-center justify-center">
+                <span className="text-emerald-600 font-bold">✓ Confirmado</span>
+              </div>
+            )}
+            {!isPast && (
+              <button onClick={() => navigate(`/trip/${trip.id}/chat`)} className="flex-1 flex items-center justify-center gap-2 gradient-bg rounded-2xl py-3.5 text-white font-semibold text-sm press-effect">
+                <MessageCircle size={18} /> Chat
+              </button>
+            )}
           </div>
         ) : hasPending || joined ? (
           <div className="flex-1 bg-amber-50 rounded-2xl py-3.5 flex items-center justify-center gap-2">

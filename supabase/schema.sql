@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   instagram_verified BOOLEAN DEFAULT FALSE,
   avatar_url TEXT DEFAULT '',
   bio TEXT DEFAULT '',
-  rating DECIMAL(3,2) DEFAULT 5.0,
+  rating DECIMAL(3,2) DEFAULT NULL,
   total_ratings INT DEFAULT 0,
   trips_as_driver INT DEFAULT 0,
   trips_as_passenger INT DEFAULT 0,
@@ -85,8 +85,27 @@ CREATE TABLE IF NOT EXISTS public.reviews (
   trip_id UUID REFERENCES public.trips(id) ON DELETE SET NULL,
   rating INT CHECK (rating BETWEEN 1 AND 5),
   text TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (reviewer_id, reviewee_id, trip_id)
 );
+
+-- Trigger: recalcula rating del perfil cuando se inserta una reseña
+CREATE OR REPLACE FUNCTION public.update_profile_rating()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE public.profiles
+  SET
+    rating = (SELECT ROUND(AVG(rating)::NUMERIC, 2) FROM public.reviews WHERE reviewee_id = NEW.reviewee_id),
+    total_ratings = (SELECT COUNT(*) FROM public.reviews WHERE reviewee_id = NEW.reviewee_id)
+  WHERE id = NEW.reviewee_id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_review_inserted ON public.reviews;
+CREATE TRIGGER on_review_inserted
+  AFTER INSERT ON public.reviews
+  FOR EACH ROW EXECUTE FUNCTION public.update_profile_rating();
 
 -- Trigger: crea perfil automáticamente cuando se registra un usuario
 CREATE OR REPLACE FUNCTION public.handle_new_user()

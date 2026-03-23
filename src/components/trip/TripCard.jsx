@@ -41,9 +41,13 @@ export default function TripCard({ trip, compact = false }) {
               )}
             </div>
             <div className="flex items-center gap-1 mt-0.5">
-              <Star size={11} className="text-amber-400 fill-amber-400" />
-              <span className="text-xs text-slate-500 font-medium">{driver?.rating?.toFixed(1)}</span>
-              <span className="text-slate-300 text-xs">·</span>
+              {driver?.rating != null && (
+                <>
+                  <Star size={11} className="text-amber-400 fill-amber-400" />
+                  <span className="text-xs text-slate-500 font-medium">{Math.round(driver.rating / 5 * 100)}%</span>
+                  <span className="text-slate-300 text-xs">·</span>
+                </>
+              )}
               <span className="text-xs text-slate-400">{driver?.university?.split(' - ')[0]}</span>
             </div>
           </div>
