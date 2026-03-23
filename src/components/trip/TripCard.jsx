@@ -8,8 +8,8 @@ export default function TripCard({ trip, compact = false }) {
   const navigate = useNavigate()
   const { driver, origin, destination, departureAt, seats, price, tags, type, passengers, pendingRequests } = trip
 
-  const totalDots = driver?.car?.seats || seats.total
-  const takenSeats = totalDots - seats.available
+  const totalDots = seats.total
+  const takenSeats = seats.total - seats.available
   const isAlmostFull = seats.available <= 1
   const isRequest = type === 'request'
 
