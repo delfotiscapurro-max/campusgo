@@ -19,10 +19,6 @@ import NotificationsPage from './pages/notifications/NotificationsPage.jsx'
 function LoadingScreen() {
   return (
     <div className="min-h-dvh flex flex-col items-center justify-center gradient-bg-br relative overflow-hidden">
-      {/* Círculos decorativos */}
-      <div className="absolute top-[-80px] right-[-80px] w-64 h-64 bg-white/10 rounded-full" />
-      <div className="absolute bottom-[-100px] left-[-60px] w-72 h-72 bg-white/10 rounded-full" />
-      <div className="absolute top-1/2 right-[-50px] w-40 h-40 bg-white/5 rounded-full" />
 
       <div className="relative z-10 flex flex-col items-center gap-6">
         {/* Ícono animado */}
