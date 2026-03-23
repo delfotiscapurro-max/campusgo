@@ -115,7 +115,7 @@ export default function ProfilePage() {
       {!isOwnProfile && <TopBar back title={profileUser?.name} />}
 
       {/* Header */}
-      <div className="gradient-bg-br pt-14 pb-6 px-4 relative overflow-hidden">
+      <div className={`gradient-bg-br ${isOwnProfile ? 'pt-14' : 'pt-[calc(var(--topbar-height)+1.5rem)]'} pb-6 px-4 relative overflow-hidden`}>
         <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-20 translate-x-20" />
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-10 -translate-x-12" />
 
