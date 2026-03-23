@@ -173,8 +173,8 @@ export default function PublishPage() {
         {/* Step 3: Date & Time */}
         {step === 3 && (
           <div className="flex flex-col gap-4 page-enter">
-            <Input label="Fecha" type="date" value={form.date} onChange={e => update('date', e.target.value)} />
-            <Input label="Hora de salida" type="time" value={form.time} onChange={e => update('time', e.target.value)} />
+            <Input label="Fecha" type="date" value={form.date} onChange={e => update('date', e.target.value)} className="[&_input]:text-center" />
+            <Input label="Hora de salida" type="time" value={form.time} onChange={e => update('time', e.target.value)} className="[&_input]:text-center" />
             {form.type === 'offer' && (
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-slate-700">Asientos para ofrecer</label>

@@ -58,11 +58,11 @@ export default function TripCard({ trip, compact = false }) {
           <div className="w-0.5 bg-gradient-to-b from-indigo-400 to-violet-400 flex-1 min-h-[16px]" />
           <div className="w-2.5 h-2.5 rounded-full bg-violet-500 flex-shrink-0" />
         </div>
-        <div className="flex flex-col justify-between flex-1 gap-1">
-          <div className="flex items-center gap-1">
+        <div className="flex flex-col justify-between flex-1 gap-1 min-w-0">
+          <div className="flex items-center gap-1 min-w-0">
             <span className="text-sm text-slate-700 font-medium truncate">{origin.label}</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 min-w-0">
             <span className="text-sm text-slate-700 font-medium truncate">{destination.label}</span>
           </div>
         </div>
