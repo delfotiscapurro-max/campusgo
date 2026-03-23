@@ -187,10 +187,26 @@ export function AuthProvider({ children }) {
       .select()
       .single()
 
+    if (error) console.error('updateProfile error:', error)
+
+    // Update local state — use DB data if available, otherwise apply fields directly
     if (data) {
       const updated = transformProfile(data)
       setUser(prev => ({ ...prev, ...updated }))
       return updated
+    } else {
+      // Optimistic update so UI reflects changes immediately
+      const optimistic = {}
+      if (fields.name) optimistic.name = fields.name
+      if (fields.bio !== undefined) optimistic.bio = fields.bio
+      if (fields.university) optimistic.university = fields.university
+      if (fields.career) optimistic.career = fields.career
+      if (fields.year !== undefined) optimistic.year = fields.year
+      if (fields.car !== undefined) optimistic.car = fields.car
+      if (fields.instagram !== undefined) optimistic.instagram = fields.instagram
+      if (fields.instagramVerified !== undefined) optimistic.instagramVerified = fields.instagramVerified
+      if (fields.avatar !== undefined) optimistic.avatar = fields.avatar
+      setUser(prev => ({ ...prev, ...optimistic }))
     }
   }, [user])
 
