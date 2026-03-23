@@ -18,7 +18,13 @@ import NotificationsPage from './pages/notifications/NotificationsPage.jsx'
 
 function LoadingScreen() {
   return (
-    <div className="min-h-dvh flex flex-col items-center justify-center gradient-bg-br relative overflow-hidden">
+    <div className="min-h-dvh flex flex-col items-center justify-center relative overflow-hidden" style={{ background: 'radial-gradient(ellipse at center, #8b5cf6 0%, #6d28d9 55%, #4f46e5 100%)' }}>
+
+      {/* Círculos semitransparentes */}
+      <div className="absolute top-[-60px] right-[-60px] w-56 h-56 bg-white/10 rounded-full" />
+      <div className="absolute bottom-[-80px] left-[-50px] w-64 h-64 bg-white/10 rounded-full" />
+      <div className="absolute top-1/3 left-[-30px] w-28 h-28 bg-white/8 rounded-full" />
+      <div className="absolute bottom-1/3 right-[-20px] w-20 h-20 bg-white/10 rounded-full" />
 
       <div className="relative z-10 flex flex-col items-center gap-6">
         {/* Ícono animado */}
