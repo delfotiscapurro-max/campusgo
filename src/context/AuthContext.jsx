@@ -31,6 +31,8 @@ export function AuthProvider({ children }) {
         .single()
 
       if (data) {
+        console.log('loadProfile data:', data)
+        console.log('loadProfile car:', data.car)
         const profile = transformProfile(data)
         profile.reviews = (data.reviews || []).map(r => ({
           rating: r.rating,
@@ -40,6 +42,7 @@ export function AuthProvider({ children }) {
         }))
         setUser(profile)
       } else {
+        console.log('loadProfile error:', error)
         // Profile row doesn't exist yet — use auth metadata (works for email & OAuth)
         const { data: { user: authUser } } = await supabase.auth.getUser()
         if (authUser) {
