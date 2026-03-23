@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Star, Car, Instagram, Settings, LogOut, Trophy, Leaf, Edit3, ChevronRight, Check, Shield } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext.jsx'
@@ -11,11 +11,13 @@ import TopBar from '../../components/layout/TopBar.jsx'
 export default function ProfilePage() {
   const { userId } = useParams()
   const navigate = useNavigate()
-  const { user: currentUser, logout, connectInstagram } = useAuth()
+  const { user: currentUser, logout, connectInstagram, updateProfile } = useAuth()
   const [showInstaModal, setShowInstaModal] = useState(false)
   const [instaHandle, setInstaHandle] = useState('')
   const [connecting, setConnecting] = useState(false)
   const [tab, setTab] = useState('info')
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const avatarInputRef = useRef(null)
 
   const isOwnProfile = !userId || userId === currentUser?.id
   const [otherUser, setOtherUser] = useState(null)
@@ -31,6 +33,25 @@ export default function ProfilePage() {
   const handleLogout = () => {
     logout()
     navigate('/login', { replace: true })
+  }
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingAvatar(true)
+    try {
+      const ext = file.name.split('.').pop()
+      const path = `${currentUser.id}/avatar.${ext}`
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, file, { upsert: true })
+      if (uploadError) throw uploadError
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
+      await updateProfile({ avatar: publicUrl + '?t=' + Date.now() })
+    } catch (err) {
+      console.error('Avatar upload error:', err)
+    }
+    setUploadingAvatar(false)
   }
 
   const handleConnectInstagram = async () => {
@@ -62,18 +83,36 @@ export default function ProfilePage() {
             <img
               src={profileUser?.avatar}
               alt={profileUser?.name}
-              className="w-24 h-24 rounded-full object-cover ring-4 ring-white/30"
+              className={`w-24 h-24 rounded-full object-cover ring-4 ring-white/30 transition-opacity ${uploadingAvatar ? 'opacity-50' : ''}`}
               onError={e => e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profileUser?.name || '')}&background=6366f1&color=fff&size=96`}
             />
+            {uploadingAvatar && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
             {profileUser?.instagramVerified && (
               <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-gradient-to-br from-pink-500 to-violet-600 rounded-full flex items-center justify-center ring-2 ring-white">
                 <Instagram size={14} className="text-white" />
               </div>
             )}
             {isOwnProfile && (
-              <button className="absolute bottom-0 left-0 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-md press-effect">
-                <Edit3 size={12} className="text-slate-600" />
-              </button>
+              <>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
+                <button
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                  className="absolute bottom-0 left-0 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-md press-effect"
+                >
+                  <Edit3 size={12} className="text-slate-600" />
+                </button>
+              </>
             )}
           </div>
 

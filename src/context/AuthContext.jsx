@@ -176,6 +176,7 @@ export function AuthProvider({ children }) {
     if (fields.car !== undefined) dbFields.car = fields.car
     if (fields.instagram !== undefined) dbFields.instagram = fields.instagram
     if (fields.instagramVerified !== undefined) dbFields.instagram_verified = fields.instagramVerified
+    if (fields.avatar !== undefined) dbFields.avatar_url = fields.avatar
     dbFields.updated_at = new Date().toISOString()
 
     const { data, error } = await supabase
