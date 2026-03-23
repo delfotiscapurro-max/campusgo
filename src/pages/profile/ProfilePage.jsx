@@ -204,7 +204,7 @@ export default function ProfilePage() {
           {/* Rating + badges */}
           <div className="flex items-center gap-3 mt-3">
             <div className="flex items-center gap-1.5 bg-white/20 px-3 py-1.5 rounded-full">
-              {profileUser?.rating != null ? (
+              {profileUser?.rating != null && profileUser?.totalRatings > 0 ? (
                 <>
                   {[1,2,3,4,5].map(i => (
                     <Star key={i} size={12} className={i <= Math.round(profileUser.rating) ? 'text-amber-300 fill-amber-300' : 'text-white/30 fill-white/30'} />

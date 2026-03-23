@@ -205,7 +205,7 @@ export default function TripDetailPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-1 mt-1">
-                  {driver.rating != null ? (
+                  {driver.rating != null && driver.totalRatings > 0 ? (
                     <>
                       {[1,2,3,4,5].map(i => (
                         <Star key={i} size={13} className={i <= Math.round(driver.rating) ? 'text-amber-400 fill-amber-400' : 'text-slate-200 fill-slate-200'} />
