@@ -64,6 +64,7 @@ export default function HomePage() {
   const allTrips = getFeedTrips()
 
   let filtered = allTrips.filter((trip) => {
+    if (new Date(trip.departureAt) < new Date()) return false
     if (roleFilter !== 'all' && trip.type !== roleFilter) return false
     if (dateFilter !== 'all') {
       const dep = new Date(trip.departureAt)

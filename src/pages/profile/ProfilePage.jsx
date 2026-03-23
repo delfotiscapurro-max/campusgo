@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Star, Car, Instagram, Settings, LogOut, Trophy, Leaf, Edit3, ChevronRight, Check, Shield, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext.jsx'
-import { supabase, transformProfile } from '../../lib/supabase.js'
+import { supabase, transformProfile, transformTrip, TRIP_SELECT } from '../../lib/supabase.js'
+import { useNavigate as useNav } from 'react-router-dom'
 import Avatar from '../../components/ui/Avatar.jsx'
 import Badge from '../../components/ui/Badge.jsx'
 import Button from '../../components/ui/Button.jsx'
@@ -28,9 +29,12 @@ export default function ProfilePage() {
   const [carForm, setCarForm] = useState({ make: '', model: '', year: '', color: '', seats: '', plate: '' })
   const [savingCar, setSavingCar] = useState(false)
 
+  const navTo = useNav()
   const isOwnProfile = !userId || userId === currentUser?.id
   const [otherUser, setOtherUser] = useState(null)
   const profileUser = isOwnProfile ? currentUser : otherUser
+  const [pastTrips, setPastTrips] = useState([])
+  const [loadingTrips, setLoadingTrips] = useState(false)
 
   useEffect(() => {
     if (!isOwnProfile && userId) {
@@ -52,6 +56,28 @@ export default function ProfilePage() {
         })
     }
   }, [userId, isOwnProfile])
+
+  useEffect(() => {
+    if (tab !== 'trips') return
+    const uid = isOwnProfile ? currentUser?.id : userId
+    if (!uid) return
+    setLoadingTrips(true)
+    const now = new Date().toISOString()
+    Promise.all([
+      supabase.from('trips').select(TRIP_SELECT).eq('driver_id', uid).lt('departure_at', now).order('departure_at', { ascending: false }).limit(20),
+      supabase.from('trip_passengers').select(`trip_id, trips(${TRIP_SELECT})`).eq('user_id', uid),
+    ]).then(([driverRes, passengerRes]) => {
+      const driverTrips = (driverRes.data || []).map(t => transformTrip(t)).filter(t => new Date(t.departureAt) < new Date())
+      const passengerTrips = (passengerRes.data || [])
+        .map(r => r.trips ? transformTrip(r.trips) : null)
+        .filter(t => t && new Date(t.departureAt) < new Date())
+      const all = [...driverTrips, ...passengerTrips]
+        .filter((t, i, arr) => arr.findIndex(x => x.id === t.id) === i)
+        .sort((a, b) => new Date(b.departureAt) - new Date(a.departureAt))
+      setPastTrips(all)
+      setLoadingTrips(false)
+    })
+  }, [tab, userId, isOwnProfile, currentUser?.id])
 
   const handleLogout = () => {
     logout()
@@ -224,6 +250,7 @@ export default function ProfilePage() {
         <div className="flex bg-slate-100 rounded-2xl p-1">
           {[
             { key: 'info', label: 'Info' },
+            { key: 'trips', label: 'Viajes' },
             { key: 'reviews', label: `Reseñas (${profileUser?.reviews?.length || 0})` },
           ].map(t => (
             <button key={t.key} onClick={() => setTab(t.key)} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${tab === t.key ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'}`}>
@@ -323,6 +350,49 @@ export default function ProfilePage() {
                 ))}
               </div>
             </div>
+          </>
+        )}
+
+        {tab === 'trips' && (
+          <>
+            {loadingTrips ? (
+              <div className="flex justify-center py-12">
+                <div className="w-7 h-7 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : pastTrips.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-4xl mb-3">🚗</div>
+                <p className="text-slate-500 text-sm">Aún no hay viajes completados</p>
+              </div>
+            ) : (
+              pastTrips.map(trip => {
+                const isDriver = trip.driverId === (isOwnProfile ? currentUser?.id : userId)
+                return (
+                  <button
+                    key={trip.id}
+                    onClick={() => navTo(`/trip/${trip.id}`)}
+                    className="w-full bg-white rounded-3xl p-4 card-shadow text-left press-effect"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${isDriver ? 'bg-indigo-50 text-indigo-600' : 'bg-violet-50 text-violet-600'}`}>
+                        {isDriver ? '🗝️ Conductor' : '🚶 Pasajero'}
+                      </span>
+                      <span className="text-xs text-slate-400">
+                        {new Date(trip.departureAt).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-slate-700 font-medium">
+                      <span className="w-2 h-2 rounded-full bg-indigo-400 flex-shrink-0" />
+                      <span className="truncate">{trip.origin?.label}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-slate-500 mt-1">
+                      <span className="w-2 h-2 rounded-full bg-violet-500 flex-shrink-0" />
+                      <span className="truncate">{trip.destination?.label}</span>
+                    </div>
+                  </button>
+                )
+              })
+            )}
           </>
         )}
 
