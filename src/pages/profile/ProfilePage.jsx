@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Star, Car, Instagram, Settings, LogOut, Trophy, Leaf, Edit3, ChevronRight, Check, Shield, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext.jsx'
-import { supabase, transformProfile, transformTrip, TRIP_SELECT } from '../../lib/supabase.js'
+import { supabase, transformProfile } from '../../lib/supabase.js'
 import { useNavigate as useNav } from 'react-router-dom'
 import Avatar from '../../components/ui/Avatar.jsx'
 import Badge from '../../components/ui/Badge.jsx'
@@ -63,17 +63,20 @@ export default function ProfilePage() {
     if (!uid) return
     setLoadingTrips(true)
     const now = new Date().toISOString()
+    const basicSelect = 'id, type, driver_id, passenger_id, origin, destination, departure_at, status'
     Promise.all([
-      supabase.from('trips').select(TRIP_SELECT).eq('driver_id', uid).lt('departure_at', now).order('departure_at', { ascending: false }).limit(20),
-      supabase.from('trip_passengers').select(`trip_id, trips(${TRIP_SELECT})`).eq('user_id', uid),
-    ]).then(([driverRes, passengerRes]) => {
-      const driverTrips = (driverRes.data || []).map(t => transformTrip(t)).filter(t => new Date(t.departureAt) < new Date())
-      const passengerTrips = (passengerRes.data || [])
-        .map(r => r.trips ? transformTrip(r.trips) : null)
-        .filter(t => t && new Date(t.departureAt) < new Date())
-      const all = [...driverTrips, ...passengerTrips]
+      supabase.from('trips').select(basicSelect).eq('driver_id', uid).lt('departure_at', now).order('departure_at', { ascending: false }).limit(20),
+      supabase.from('trips').select(basicSelect).eq('passenger_id', uid).lt('departure_at', now).order('departure_at', { ascending: false }).limit(20),
+      supabase.from('trip_passengers').select('trip_id').eq('user_id', uid).then(async ({ data }) => {
+        if (!data?.length) return []
+        const ids = data.map(r => r.trip_id)
+        const { data: trips } = await supabase.from('trips').select(basicSelect).in('id', ids).lt('departure_at', now).order('departure_at', { ascending: false })
+        return trips || []
+      }),
+    ]).then(([driverRes, passengerRes, passengerTrips]) => {
+      const all = [...(driverRes.data || []), ...(passengerRes.data || []), ...passengerTrips]
         .filter((t, i, arr) => arr.findIndex(x => x.id === t.id) === i)
-        .sort((a, b) => new Date(b.departureAt) - new Date(a.departureAt))
+        .sort((a, b) => new Date(b.departure_at) - new Date(a.departure_at))
       setPastTrips(all)
       setLoadingTrips(false)
     })
@@ -366,7 +369,8 @@ export default function ProfilePage() {
               </div>
             ) : (
               pastTrips.map(trip => {
-                const isDriver = trip.driverId === (isOwnProfile ? currentUser?.id : userId)
+                const uid = isOwnProfile ? currentUser?.id : userId
+                const isDriver = trip.driver_id === uid
                 return (
                   <button
                     key={trip.id}
@@ -378,7 +382,7 @@ export default function ProfilePage() {
                         {isDriver ? '🗝️ Conductor' : '🚶 Pasajero'}
                       </span>
                       <span className="text-xs text-slate-400">
-                        {new Date(trip.departureAt).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
+                        {new Date(trip.departure_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-slate-700 font-medium">
