@@ -190,7 +190,7 @@ export default function PublishPage() {
                   max="20"
                   value={form.seats.total}
                   onChange={e => { const n = Math.max(1, parseInt(e.target.value) || 1); update('seats', { total: n, available: n }) }}
-                  className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-800 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-800 text-sm font-semibold text-center focus:outline-none focus:ring-2 focus:ring-indigo-300"
                 />
               </div>
             )}
