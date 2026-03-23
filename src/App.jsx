@@ -20,13 +20,7 @@ function LoadingScreen() {
   return (
     <div className="min-h-dvh flex flex-col items-center justify-center relative overflow-hidden" style={{ background: '#6D3EE9' }}>
 
-      {/* Círculos semitransparentes */}
-      <div className="absolute top-[-60px] right-[-60px] w-56 h-56 bg-white/10 rounded-full" />
-      <div className="absolute bottom-[-80px] left-[-50px] w-64 h-64 bg-white/10 rounded-full" />
-      <div className="absolute top-1/3 left-[-30px] w-28 h-28 bg-white/8 rounded-full" />
-      <div className="absolute bottom-1/3 right-[-20px] w-20 h-20 bg-white/10 rounded-full" />
-
-      <div className="relative z-10 flex flex-col items-center gap-6">
+<div className="relative z-10 flex flex-col items-center gap-6">
         {/* Ícono animado */}
         <div className="w-24 h-24 bg-white/20 rounded-3xl flex items-center justify-center animate-pulse">
           <svg viewBox="0 0 64 64" className="w-20 h-20" fill="none">
