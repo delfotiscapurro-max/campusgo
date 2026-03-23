@@ -22,9 +22,9 @@ export default function PublishPage() {
     destination: { label: '', lat: -34.54, lng: -58.45 },
     date: new Date().toISOString().slice(0, 10),
     time: '07:30',
-    seats: { total: user?.car?.seats || 3, available: user?.car?.seats || 3 },
+    seats: { total: '', available: '' },
     radiusKm: 2,
-    price: 900,
+    price: '',
     description: '',
     tags: [],
   })
@@ -230,7 +230,7 @@ export default function PublishPage() {
                   min="1"
                   max="20"
                   value={form.seats.total}
-                  onChange={e => { const n = Math.max(1, parseInt(e.target.value) || 1); update('seats', { total: n, available: n }) }}
+                  onChange={e => { const v = e.target.value; const n = v === '' ? '' : Math.max(1, parseInt(v) || 1); update('seats', { total: n, available: n }) }}
                   className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-800 text-sm font-semibold text-center focus:outline-none focus:ring-2 focus:ring-indigo-300"
                 />
               </div>
@@ -250,7 +250,7 @@ export default function PublishPage() {
                   <input
                     type="number"
                     value={form.price}
-                    onChange={e => update('price', Number(e.target.value))}
+                    onChange={e => update('price', e.target.value === '' ? '' : Number(e.target.value))}
                     className="w-full bg-white rounded-2xl border border-slate-200 pl-8 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
                     min={0}
                     step={50}
@@ -301,8 +301,8 @@ export default function PublishPage() {
                 <div className="flex justify-between"><span className="text-slate-400">Hasta</span><span className="font-medium">{form.destination.label}</span></div>
                 <div className="flex justify-between"><span className="text-slate-400">Fecha</span><span className="font-medium">{new Date(form.date).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}</span></div>
                 <div className="flex justify-between"><span className="text-slate-400">Hora</span><span className="font-medium">{form.time}</span></div>
-                {form.type === 'offer' && <div className="flex justify-between"><span className="text-slate-400">Asientos</span><span className="font-medium">{form.seats.total}</span></div>}
-                {form.type === 'offer' && <div className="flex justify-between"><span className="text-slate-400">Precio</span><span className="font-bold text-indigo-600">${form.price.toLocaleString('es-AR')} p/p</span></div>}
+                {form.type === 'offer' && <div className="flex justify-between"><span className="text-slate-400">Asientos</span><span className="font-medium">{form.seats.total || '-'}</span></div>}
+                {form.type === 'offer' && <div className="flex justify-between"><span className="text-slate-400">Precio</span><span className="font-bold text-indigo-600">{form.price !== '' ? `$${Number(form.price).toLocaleString('es-AR')} p/p` : '-'}</span></div>}
                 {form.type === 'offer' && <div className="flex justify-between"><span className="text-slate-400">Radio recogida</span><span className="font-medium">{form.radiusKm}km</span></div>}
               </div>
               {form.tags.length > 0 && (
