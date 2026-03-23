@@ -10,7 +10,7 @@ input[type='time']::-webkit-calendar-picker-indicator {
 }
 input[type='date'],
 input[type='time'] {
-  text-align: center;
+  text-align: left;
   -webkit-appearance: none;
   appearance: none;
 }
