@@ -224,18 +224,24 @@ export default function PublishPage() {
             </div>
             {form.type === 'offer' && (
               <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-slate-700">Asientos para ofrecer</label>
+                <label className="text-sm font-semibold text-slate-700">
+                  Asientos para ofrecer
+                  {form.seats.total === '' && <span className="text-rose-400 ml-1">*</span>}
+                </label>
                 <input
                   type="number"
                   min="1"
                   max="20"
                   value={form.seats.total}
                   onChange={e => { const v = e.target.value; const n = v === '' ? '' : Math.max(1, parseInt(v) || 1); update('seats', { total: n, available: n }) }}
-                  className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-800 text-sm font-semibold text-center focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  className={`w-full bg-white border rounded-2xl px-4 py-3.5 text-slate-800 text-sm font-semibold text-center focus:outline-none focus:ring-2 focus:ring-indigo-300 ${form.seats.total === '' ? 'border-rose-300' : 'border-slate-200'}`}
                 />
               </div>
             )}
-            <Button onClick={() => setStep(4)} fullWidth size="lg">Continuar</Button>
+            {form.type === 'offer' && form.seats.total === '' && (
+              <p className="text-rose-500 text-xs font-medium -mt-2">Ingresá la cantidad de asientos para continuar</p>
+            )}
+            <Button onClick={() => setStep(4)} fullWidth size="lg" disabled={form.type === 'offer' && !form.seats.total}>Continuar</Button>
           </div>
         )}
 
@@ -244,18 +250,24 @@ export default function PublishPage() {
           <div className="flex flex-col gap-4 page-enter">
             {form.type === 'offer' && (
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-slate-700">Precio por persona (ARS)</label>
+                <label className="text-sm font-semibold text-slate-700">
+                  Precio por persona (ARS)
+                  {form.price === '' && <span className="text-rose-400 ml-1">*</span>}
+                </label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-semibold">$</span>
                   <input
                     type="number"
                     value={form.price}
                     onChange={e => update('price', e.target.value === '' ? '' : Number(e.target.value))}
-                    className="w-full bg-white rounded-2xl border border-slate-200 pl-8 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    className={`w-full bg-white rounded-2xl border pl-8 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 ${form.price === '' ? 'border-rose-300' : 'border-slate-200'}`}
                     min={0}
                     step={50}
                   />
                 </div>
+                {form.price === '' && (
+                  <p className="text-rose-500 text-xs font-medium">Ingresá el precio para continuar (puede ser $0)</p>
+                )}
               </div>
             )}
             <div className="flex flex-col gap-1.5">
@@ -282,7 +294,7 @@ export default function PublishPage() {
                 ))}
               </div>
             </div>
-            <Button onClick={() => setStep(5)} fullWidth size="lg">Revisar viaje</Button>
+            <Button onClick={() => setStep(5)} fullWidth size="lg" disabled={form.type === 'offer' && form.price === ''}>Revisar viaje</Button>
           </div>
         )}
 
