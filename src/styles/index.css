@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hide native calendar/clock icons and center text in date/time inputs */
+input[type='date']::-webkit-calendar-picker-indicator,
+input[type='time']::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+input[type='date'],
+input[type='time'] {
+  text-align: center;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 /* Price range slider thumb */
 input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
