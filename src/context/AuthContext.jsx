@@ -215,11 +215,15 @@ export function AuthProvider({ children }) {
     return updateProfile({ instagram: cleanHandle, instagramVerified: true })
   }, [updateProfile])
 
+  const refreshProfile = useCallback(() => {
+    if (user?.id) return loadProfile(user.id)
+  }, [user?.id])
+
   return (
     <AuthContext.Provider value={{
       user, isLoading,
       isAuthenticated: !!user,
-      login, loginWithInstagram, register, logout, updateProfile, connectInstagram
+      login, loginWithInstagram, register, logout, updateProfile, connectInstagram, refreshProfile
     }}>
       {children}
     </AuthContext.Provider>

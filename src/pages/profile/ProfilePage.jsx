@@ -14,7 +14,7 @@ const YEAR_OPTIONS = ['1°', '2°', '3°', '4°', '5°', '6°', 'Posgrado']
 export default function ProfilePage() {
   const { userId } = useParams()
   const navigate = useNavigate()
-  const { user: currentUser, logout, connectInstagram, updateProfile } = useAuth()
+  const { user: currentUser, logout, connectInstagram, updateProfile, refreshProfile } = useAuth()
   const [showInstaModal, setShowInstaModal] = useState(false)
   const [instaHandle, setInstaHandle] = useState('')
   const [connecting, setConnecting] = useState(false)
@@ -76,6 +76,7 @@ export default function ProfilePage() {
   const handleSaveProfile = async () => {
     setSaving(true)
     await updateProfile(editForm)
+    await refreshProfile()
     setSaving(false)
     setShowEditModal(false)
   }
@@ -83,6 +84,7 @@ export default function ProfilePage() {
   const handleSaveCar = async () => {
     setSavingCar(true)
     await updateProfile({ car: { ...carForm, seats: Number(carForm.seats) } })
+    await refreshProfile()
     setSavingCar(false)
     setShowCarModal(false)
   }
