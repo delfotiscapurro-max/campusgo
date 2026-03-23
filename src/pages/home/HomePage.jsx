@@ -5,7 +5,6 @@ import { useTrips } from '../../context/TripsContext.jsx'
 import TopBar from '../../components/layout/TopBar.jsx'
 import TripCard from '../../components/trip/TripCard.jsx'
 import StoriesBar from '../../components/stories/StoriesBar.jsx'
-import { UNIVERSITIES } from '../../data/universities.js'
 
 const DATE_FILTERS = [
   { key: 'all', label: 'Todos' },
@@ -47,14 +46,12 @@ export default function HomePage() {
   const [maxPrice, setMaxPrice] = useState(0)
   const [minSeats, setMinSeats] = useState(0)
   const [onlyVerified, setOnlyVerified] = useState(false)
-  const [destFilter, setDestFilter] = useState('')
 
   const activeFilterCount = [
     sortBy !== 'time',
     maxPrice > 0,
     minSeats > 0,
     onlyVerified,
-    destFilter !== '',
   ].filter(Boolean).length
 
   const allTrips = getFeedTrips()
@@ -76,7 +73,6 @@ export default function HomePage() {
     if (maxPrice > 0 && trip.price > maxPrice) return false
     if (minSeats > 0 && trip.seats?.available < minSeats) return false
     if (onlyVerified && !trip.driver?.instagramVerified) return false
-    if (destFilter && !trip.destination?.label?.toLowerCase().includes(destFilter.toLowerCase())) return false
     return true
   })
 
@@ -201,7 +197,7 @@ export default function HomePage() {
               <div className="flex items-center gap-2">
                 {activeFilterCount > 0 && (
                   <button
-                    onClick={() => { setSortBy('time'); setMaxPrice(0); setMinSeats(0); setOnlyVerified(false); setDestFilter('') }}
+                    onClick={() => { setSortBy('time'); setMaxPrice(0); setMinSeats(0); setOnlyVerified(false) }}
                     className="text-xs text-rose-500 font-semibold"
                   >
                     Limpiar todo
@@ -228,26 +224,6 @@ export default function HomePage() {
                       {sortBy === o.key && <Check size={16} className="text-indigo-500" />}
                     </button>
                   ))}
-                </div>
-              </div>
-
-              {/* Destino */}
-              <div>
-                <p className="text-sm font-bold text-slate-700 mb-2">Destino</p>
-                <div className="relative">
-                  <select
-                    value={destFilter}
-                    onChange={e => setDestFilter(e.target.value)}
-                    className="w-full appearance-none bg-white border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                  >
-                    <option value="">Cualquier destino</option>
-                    {UNIVERSITIES.map(u => (
-                      <option key={u} value={u}>{u}</option>
-                    ))}
-                  </select>
-                  <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  </div>
                 </div>
               </div>
 
