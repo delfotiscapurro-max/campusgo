@@ -8,7 +8,8 @@ export default function TripCard({ trip, compact = false }) {
   const navigate = useNavigate()
   const { driver, origin, destination, departureAt, seats, price, tags, type, passengers, pendingRequests } = trip
 
-  const occupancyPercent = seats.total > 0 ? ((seats.total - seats.available) / seats.total) * 100 : 0
+  const totalDots = driver?.car?.seats || seats.total
+  const takenSeats = totalDots - seats.available
   const isAlmostFull = seats.available <= 1
   const isRequest = type === 'request'
 
@@ -73,10 +74,10 @@ export default function TripCard({ trip, compact = false }) {
           {/* Seats */}
           <div className="flex items-center gap-1.5">
             <div className="flex gap-0.5">
-              {Array.from({ length: seats.total }).map((_, i) => (
+              {Array.from({ length: totalDots }).map((_, i) => (
                 <div
                   key={i}
-                  className={`w-2 h-2 rounded-full ${i < seats.total - seats.available ? 'bg-indigo-400' : 'bg-slate-200'}`}
+                  className={`w-2 h-2 rounded-full ${i < takenSeats ? 'bg-indigo-400' : 'bg-slate-200'}`}
                 />
               ))}
             </div>

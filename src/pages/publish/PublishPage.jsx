@@ -21,7 +21,7 @@ export default function PublishPage() {
     destination: { label: '', lat: -34.54, lng: -58.45 },
     date: new Date().toISOString().slice(0, 10),
     time: '07:30',
-    seats: { total: 3, available: 3 },
+    seats: { total: user?.car?.seats || 3, available: user?.car?.seats || 3 },
     radiusKm: 2,
     price: 900,
     description: '',
@@ -177,9 +177,9 @@ export default function PublishPage() {
             <Input label="Hora de salida" type="time" value={form.time} onChange={e => update('time', e.target.value)} />
             {form.type === 'offer' && (
               <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-slate-700">Asientos disponibles</label>
-                <div className="flex gap-2">
-                  {[1,2,3,4].map(n => (
+                <label className="text-sm font-semibold text-slate-700">Asientos para ofrecer</label>
+                <div className="flex gap-2 flex-wrap">
+                  {Array.from({ length: user?.car?.seats || 4 }, (_, i) => i + 1).map(n => (
                     <button key={n} onClick={() => update('seats', { total: n, available: n })} className={`flex-1 py-3 rounded-2xl text-sm font-bold transition-all press-effect ${form.seats.total === n ? 'gradient-bg text-white' : 'bg-white text-slate-600 border border-slate-200'}`}>
                       {n}
                     </button>

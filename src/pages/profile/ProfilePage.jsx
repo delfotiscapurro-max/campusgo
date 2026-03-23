@@ -474,7 +474,7 @@ export default function ProfilePage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Asientos totales</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Asientos para ofrecer</label>
                   <input
                     value={carForm.seats}
                     onChange={e => setCarForm(f => ({ ...f, seats: e.target.value }))}
