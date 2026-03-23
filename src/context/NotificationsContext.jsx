@@ -14,7 +14,6 @@ export function NotificationsProvider({ children }) {
     if (!user?.id) return
     loadNotifications()
 
-    // Realtime: escucha notificaciones nuevas en tiempo real
     const channel = supabase
       .channel('notifications:' + user.id)
       .on('postgres_changes', {
@@ -62,62 +61,8 @@ export function NotificationsProvider({ children }) {
     }
   }
 
-  const unreadCount = notifications.filter(n => !n.read).length
-
-  const markRead = useCallback(async (id) => {
-    await supabase.from('notifications').update({ read: true }).eq('id', id)
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
-  }, [])
-
-  const markAllRead = useCallback(async () => {
-    if (!user?.id) return
-    await supabase.from('notifications')
-      .update({ read: true })
-      .eq('recipient_id', user.id)
-      .eq('read', false)
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
-  }, [user?.id])
-
-  const respondToRequest = useCallback(async (notificationId, action) => {
-    const notif = notifications.find(n => n.id === notificationId)
-    if (!notif) return
-
-    if (action === 'accept') {
-      await acceptRequest(notif.tripId, notif.actorId)
-      // Send accepted notification to the requester
-      await addNotification({
-        recipientId: notif.actorId,
-        type: 'request_accepted',
-        tripId: notif.tripId,
-        actorId: user.id,
-        message: `${user.name} aceptó tu solicitud 🎉 ¡Ya sos parte del viaje!`,
-        actions: [],
-      })
-    } else {
-      await denyRequest(notif.tripId, notif.actorId)
-      await addNotification({
-        recipientId: notif.actorId,
-        type: 'request_denied',
-        tripId: notif.tripId,
-        actorId: user.id,
-        message: `${user.name} no pudo aceptarte esta vez 😕`,
-        actions: [],
-      })
-    }
-
-    // Mark as read + remove actions
-    await supabase.from('notifications')
-      .update({ read: true, actions: [] })
-      .eq('id', notificationId)
-
-    setNotifications(prev => prev.map(n =>
-      n.id === notificationId
-        ? { ...n, read: true, actions: [] }
-        : n
-    ))
-  }, [notifications, acceptRequest, denyRequest, user])
-
-  const addNotification = useCallback(async (notif) => {
+  // Base insert — used by addNotification and respondToRequest
+  async function insertNotification(notif) {
     const { data, error } = await supabase.from('notifications').insert({
       recipient_id: notif.recipientId,
       type: notif.type,
@@ -128,13 +73,61 @@ export function NotificationsProvider({ children }) {
       read: false,
     }).select().single()
 
-    if (error) console.error('addNotification error:', error)
+    if (error) console.error('insertNotification error:', error)
+    return data
+  }
 
-    // Only add to local state if it's for current user
+  const unreadCount = notifications.filter(n => !n.read).length
+
+  const markRead = useCallback(async (id) => {
+    await supabase.from('notifications').update({ read: true }).eq('id', id)
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
+  }, [])
+
+  const markAllRead = useCallback(async () => {
+    if (!user?.id) return
+    await supabase.from('notifications').update({ read: true }).eq('recipient_id', user.id).eq('read', false)
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+  }, [user?.id])
+
+  const addNotification = useCallback(async (notif) => {
+    const data = await insertNotification(notif)
     if (data && data.recipient_id === user?.id) {
       setNotifications(prev => [mapRow(data), ...prev])
     }
   }, [user?.id])
+
+  const respondToRequest = useCallback(async (notificationId, action) => {
+    const notif = notifications.find(n => n.id === notificationId)
+    if (!notif) return
+
+    if (action === 'accept') {
+      await acceptRequest(notif.tripId, notif.actorId)
+      await insertNotification({
+        recipientId: notif.actorId,
+        type: 'request_accepted',
+        tripId: notif.tripId,
+        actorId: user.id,
+        message: `${user.name} aceptó tu solicitud 🎉 ¡Ya sos parte del viaje!`,
+        actions: [],
+      })
+    } else {
+      await denyRequest(notif.tripId, notif.actorId)
+      await insertNotification({
+        recipientId: notif.actorId,
+        type: 'request_denied',
+        tripId: notif.tripId,
+        actorId: user.id,
+        message: `${user.name} no pudo aceptarte esta vez 😕`,
+        actions: [],
+      })
+    }
+
+    await supabase.from('notifications').update({ read: true, actions: [] }).eq('id', notificationId)
+    setNotifications(prev => prev.map(n =>
+      n.id === notificationId ? { ...n, read: true, actions: [] } : n
+    ))
+  }, [notifications, acceptRequest, denyRequest, user])
 
   return (
     <NotificationsContext.Provider value={{

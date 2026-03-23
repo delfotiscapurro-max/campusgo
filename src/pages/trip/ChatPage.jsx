@@ -4,6 +4,7 @@ import { Send, ChevronLeft } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useTrips } from '../../context/TripsContext.jsx'
+import { useNotifications } from '../../context/NotificationsContext.jsx'
 import Avatar from '../../components/ui/Avatar.jsx'
 
 export default function ChatPage() {
@@ -11,6 +12,7 @@ export default function ChatPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { getTripById } = useTrips()
+  const { addNotification } = useNotifications()
   const [trip, setTrip] = useState(null)
   const [messages, setMessages] = useState([])
   const [text, setText] = useState('')
@@ -62,12 +64,30 @@ export default function ChatPage() {
     e.preventDefault()
     if (!text.trim() || sending) return
     setSending(true)
+    const msgText = text.trim()
     const { error } = await supabase.from('trip_messages').insert({
       trip_id: id,
       sender_id: user.id,
-      text: text.trim(),
+      text: msgText,
     })
-    if (!error) setText('')
+    if (!error) {
+      setText('')
+      // Notificar a todos los miembros del viaje excepto al que escribió
+      if (trip) {
+        const members = [trip.driverId, ...(trip.passengerIds || [])].filter(uid => uid && uid !== user.id)
+        const preview = msgText.length > 40 ? msgText.slice(0, 40) + '...' : msgText
+        for (const uid of members) {
+          await addNotification({
+            recipientId: uid,
+            type: 'chat_message',
+            tripId: id,
+            actorId: user.id,
+            message: `${user.name} escribió en el chat: "${preview}"`,
+            actions: [],
+          })
+        }
+      }
+    }
     setSending(false)
   }
 

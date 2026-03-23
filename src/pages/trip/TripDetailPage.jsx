@@ -107,6 +107,7 @@ export default function TripDetailPage() {
     await refreshTrip()
   }
 
+
   return (
     <div className="min-h-dvh bg-[#f5f6ff]">
       {/* Hero header with gradient */}
