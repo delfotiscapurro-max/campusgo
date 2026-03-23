@@ -69,8 +69,9 @@ export default function TripDetailPage() {
       : trip.type === 'request'
         ? `${user.name} también busca viaje y quiere ir con vos 👥`
         : `${user.name} quiere unirse a tu viaje 🚗`
+    const recipientId = trip.type === 'request' ? trip.passengerId : trip.driverId
     await addNotification({
-      recipientId: trip.driverId,
+      recipientId,
       type: 'join_request',
       tripId: trip.id,
       actorId: user.id,
