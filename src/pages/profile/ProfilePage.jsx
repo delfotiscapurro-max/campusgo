@@ -316,7 +316,7 @@ export default function ProfilePage() {
       {showEditModal && (
         <>
           <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setShowEditModal(false)} />
-          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white rounded-t-3xl z-50 px-5 pt-4 pb-[calc(2rem+var(--safe-bottom))]">
+          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white rounded-t-3xl z-50 px-5 pt-4 pb-[calc(var(--nav-height)+var(--safe-bottom)+1rem)]">
             <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4" />
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold text-slate-800">Editar perfil</h2>
