@@ -63,7 +63,7 @@ export function NotificationsProvider({ children }) {
 
   // Base insert — used by addNotification and respondToRequest
   async function insertNotification(notif) {
-    const { data, error } = await supabase.from('notifications').insert({
+    const { error } = await supabase.from('notifications').insert({
       recipient_id: notif.recipientId,
       type: notif.type,
       trip_id: notif.tripId || null,
@@ -71,10 +71,8 @@ export function NotificationsProvider({ children }) {
       message: notif.message,
       actions: notif.actions || [],
       read: false,
-    }).select().single()
-
+    })
     if (error) console.error('insertNotification error:', error)
-    return data
   }
 
   const unreadCount = notifications.filter(n => !n.read).length
@@ -91,11 +89,8 @@ export function NotificationsProvider({ children }) {
   }, [user?.id])
 
   const addNotification = useCallback(async (notif) => {
-    const data = await insertNotification(notif)
-    if (data && data.recipient_id === user?.id) {
-      setNotifications(prev => [mapRow(data), ...prev])
-    }
-  }, [user?.id])
+    await insertNotification(notif)
+  }, [])
 
   const respondToRequest = useCallback(async (notificationId, action) => {
     const notif = notifications.find(n => n.id === notificationId)
