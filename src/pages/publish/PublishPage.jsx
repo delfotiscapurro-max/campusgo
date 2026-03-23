@@ -94,7 +94,7 @@ export default function PublishPage() {
         </div>
       </div>
 
-      <div className="flex-1 px-4 pt-6 pb-32">
+      <div className="flex-1 px-4 pt-6 pb-32 overflow-x-hidden">
         {/* Step 1: Role */}
         {step === 1 && (
           <div className="flex flex-col gap-4 page-enter">
