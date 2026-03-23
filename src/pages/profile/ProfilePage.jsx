@@ -24,6 +24,9 @@ export default function ProfilePage() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [editForm, setEditForm] = useState({})
   const [saving, setSaving] = useState(false)
+  const [showCarModal, setShowCarModal] = useState(false)
+  const [carForm, setCarForm] = useState({ make: '', model: '', year: '', color: '', seats: '', plate: '' })
+  const [savingCar, setSavingCar] = useState(false)
 
   const isOwnProfile = !userId || userId === currentUser?.id
   const [otherUser, setOtherUser] = useState(null)
@@ -75,6 +78,13 @@ export default function ProfilePage() {
     await updateProfile(editForm)
     setSaving(false)
     setShowEditModal(false)
+  }
+
+  const handleSaveCar = async () => {
+    setSavingCar(true)
+    await updateProfile({ car: { ...carForm, seats: Number(carForm.seats) } })
+    setSavingCar(false)
+    setShowCarModal(false)
   }
 
   const handleConnectInstagram = async () => {
@@ -236,10 +246,19 @@ export default function ProfilePage() {
                   <span className="font-mono font-bold text-indigo-700">{profileUser.car.plate}</span>
                 </div>
               </div>
+            ) : isOwnProfile ? (
+              <button
+                onClick={() => { setCarForm({ make: '', model: '', year: '', color: '', seats: '', plate: '' }); setShowCarModal(true) }}
+                className="w-full bg-white rounded-3xl p-5 card-shadow text-center press-effect border-2 border-dashed border-slate-200 hover:border-indigo-300 transition-all"
+              >
+                <div className="text-3xl mb-2">🚗</div>
+                <p className="font-semibold text-slate-700 text-sm">Registrá tu auto</p>
+                <p className="text-slate-400 text-xs mt-0.5">Tocá para agregar tu vehículo</p>
+              </button>
             ) : (
               <div className="bg-white rounded-3xl p-5 card-shadow text-center">
                 <div className="text-3xl mb-2">🚌</div>
-                <p className="text-slate-500 text-sm">{isOwnProfile ? 'No tenés auto registrado' : 'Viaja como pasajero'}</p>
+                <p className="text-slate-500 text-sm">Viaja como pasajero</p>
               </div>
             )}
 
@@ -391,6 +410,98 @@ export default function ProfilePage() {
               className="w-full gradient-bg text-white py-3.5 rounded-2xl font-bold text-sm disabled:opacity-50 mt-4"
             >
               {saving ? 'Guardando...' : 'Guardar cambios'}
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Car registration bottom sheet */}
+      {showCarModal && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setShowCarModal(false)} />
+          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white rounded-t-3xl z-50 px-5 pt-4 pb-[calc(var(--nav-height)+var(--safe-bottom)+1rem)]">
+            <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4" />
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-slate-800">Registrar auto</h2>
+              <button onClick={() => setShowCarModal(false)} className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
+                <X size={16} className="text-slate-500" />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-3 overflow-y-auto max-h-[50vh] pb-1">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Marca</label>
+                  <input
+                    value={carForm.make}
+                    onChange={e => setCarForm(f => ({ ...f, make: e.target.value }))}
+                    placeholder="Ej: Toyota"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Modelo</label>
+                  <input
+                    value={carForm.model}
+                    onChange={e => setCarForm(f => ({ ...f, model: e.target.value }))}
+                    placeholder="Ej: Corolla"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Año</label>
+                  <input
+                    value={carForm.year}
+                    onChange={e => setCarForm(f => ({ ...f, year: e.target.value }))}
+                    placeholder="Ej: 2019"
+                    type="number"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Color</label>
+                  <input
+                    value={carForm.color}
+                    onChange={e => setCarForm(f => ({ ...f, color: e.target.value }))}
+                    placeholder="Ej: Blanco"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Asientos</label>
+                  <input
+                    value={carForm.seats}
+                    onChange={e => setCarForm(f => ({ ...f, seats: e.target.value }))}
+                    placeholder="Ej: 4"
+                    type="number"
+                    min="1" max="8"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Patente</label>
+                  <input
+                    value={carForm.plate}
+                    onChange={e => setCarForm(f => ({ ...f, plate: e.target.value.toUpperCase() }))}
+                    placeholder="Ej: AB123CD"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handleSaveCar}
+              disabled={savingCar || !carForm.make || !carForm.model || !carForm.plate}
+              className="w-full gradient-bg text-white py-3.5 rounded-2xl font-bold text-sm disabled:opacity-50 mt-4"
+            >
+              {savingCar ? 'Guardando...' : 'Registrar auto'}
             </button>
           </div>
         </>
