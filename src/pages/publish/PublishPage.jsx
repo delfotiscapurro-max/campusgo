@@ -17,6 +17,7 @@ export default function PublishPage() {
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({
     type: 'offer',
+    direction: 'to_uni',
     origin: { label: '', lat: -34.59, lng: -58.44 },
     destination: { label: '', lat: -34.54, lng: -58.45 },
     date: new Date().toISOString().slice(0, 10),
@@ -134,23 +135,63 @@ export default function PublishPage() {
         {/* Step 2: Route */}
         {step === 2 && (
           <div className="flex flex-col gap-4 page-enter">
-            <AddressInput
-              label="Punto de partida"
-              placeholder="Ej: Av. Corrientes 1234, Palermo..."
-              value={form.origin.label}
-              onChange={suggestion => update('origin', suggestion)}
-            />
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700">Destino (universidad)</label>
-              <select
-                value={form.destination.label}
-                onChange={e => update('destination', { label: e.target.value, lat: -34.54, lng: -58.45 })}
-                className="w-full bg-white rounded-2xl border border-slate-200 px-4 py-3.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            {/* Direction toggle */}
+            <div className="flex bg-slate-100 rounded-2xl p-1">
+              <button
+                onClick={() => { update('direction', 'to_uni'); update('origin', { label: '', lat: -34.59, lng: -58.44 }); update('destination', { label: '', lat: -34.54, lng: -58.45 }) }}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${form.direction === 'to_uni' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'}`}
               >
-                <option value="">Seleccioná la universidad</option>
-                {UNIVERSITIES.map(u => <option key={u} value={u}>{u}</option>)}
-              </select>
+                🏠 → 🎓 Voy a la facu
+              </button>
+              <button
+                onClick={() => { update('direction', 'from_uni'); update('origin', { label: '', lat: -34.54, lng: -58.45 }); update('destination', { label: '', lat: -34.59, lng: -58.44 }) }}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${form.direction === 'from_uni' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'}`}
+              >
+                🎓 → 🏠 Salgo de la facu
+              </button>
             </div>
+
+            {form.direction === 'to_uni' ? (
+              <>
+                <AddressInput
+                  label="Punto de partida"
+                  placeholder="Ej: Av. Corrientes 1234, Palermo..."
+                  value={form.origin.label}
+                  onChange={suggestion => update('origin', suggestion)}
+                />
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-slate-700">Destino (universidad)</label>
+                  <select
+                    value={form.destination.label}
+                    onChange={e => update('destination', { label: e.target.value, lat: -34.54, lng: -58.45 })}
+                    className="w-full bg-white rounded-2xl border border-slate-200 px-4 py-3.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  >
+                    <option value="">Seleccioná la universidad</option>
+                    {UNIVERSITIES.map(u => <option key={u} value={u}>{u}</option>)}
+                  </select>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-slate-700">Punto de partida (universidad)</label>
+                  <select
+                    value={form.origin.label}
+                    onChange={e => update('origin', { label: e.target.value, lat: -34.54, lng: -58.45 })}
+                    className="w-full bg-white rounded-2xl border border-slate-200 px-4 py-3.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  >
+                    <option value="">Seleccioná la universidad</option>
+                    {UNIVERSITIES.map(u => <option key={u} value={u}>{u}</option>)}
+                  </select>
+                </div>
+                <AddressInput
+                  label="Destino"
+                  placeholder="Ej: Av. Corrientes 1234, Palermo..."
+                  value={form.destination.label}
+                  onChange={suggestion => update('destination', suggestion)}
+                />
+              </>
+            )}
             {form.type === 'offer' && (
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-slate-700">Radio de recogida: <span className="text-indigo-600">{form.radiusKm}km</span></label>
