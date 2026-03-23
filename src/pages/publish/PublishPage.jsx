@@ -173,16 +173,14 @@ export default function PublishPage() {
         {/* Step 3: Date & Time */}
         {step === 3 && (
           <div className="flex flex-col gap-4 page-enter">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700">Fecha</label>
-              <div className="overflow-hidden rounded-2xl">
-                <input type="date" value={form.date} onChange={e => update('date', e.target.value)} style={{ textAlign: 'center' }} className="w-full min-w-0 bg-white border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all" />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-slate-700">Fecha</label>
+                <input type="date" value={form.date} onChange={e => update('date', e.target.value)} className="w-full bg-white border border-slate-200 rounded-2xl px-2 py-3.5 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all" />
               </div>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700">Hora de salida</label>
-              <div className="overflow-hidden rounded-2xl">
-                <input type="time" value={form.time} onChange={e => update('time', e.target.value)} style={{ textAlign: 'center' }} className="w-full min-w-0 bg-white border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all" />
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-slate-700">Hora</label>
+                <input type="time" value={form.time} onChange={e => update('time', e.target.value)} className="w-full bg-white border border-slate-200 rounded-2xl px-2 py-3.5 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all" />
               </div>
             </div>
             {form.type === 'offer' && (
