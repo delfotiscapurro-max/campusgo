@@ -74,7 +74,7 @@ function AppRoutes() {
     <AppShell>
       <Routes>
         <Route path="/" element={<Navigate to={isAuthenticated ? '/home' : '/login'} replace />} />
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login" element={isAuthenticated ? <Navigate to="/home" replace /> : <LoginPage />} />
         <Route path="/register" element={isAuthenticated ? <Navigate to="/home" replace /> : <RegisterPage />} />
 
         <Route path="/complete-profile" element={isAuthenticated ? <CompleteProfilePage /> : <Navigate to="/login" replace />} />

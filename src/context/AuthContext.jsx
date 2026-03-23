@@ -91,6 +91,9 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
+    // Esperamos a que el perfil se cargue antes de retornar,
+    // así isAuthenticated ya es true cuando LoginPage llama navigate('/home')
+    await loadProfile(data.user.id)
     return data.user
   }, [])
 

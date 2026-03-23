@@ -7,7 +7,7 @@ import Input from '../../components/ui/Input.jsx'
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { login, loginWithInstagram, logout, user, isAuthenticated } = useAuth()
+  const { login, loginWithInstagram } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -53,20 +53,6 @@ export default function LoginPage() {
 
       {/* Form */}
       <div className="flex-1 bg-[#f5f6ff] rounded-t-[32px] -mt-4 px-6 pt-8 pb-10">
-        {isAuthenticated && user && (
-          <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs text-amber-700 font-semibold">Sesión activa como</p>
-              <p className="text-sm text-amber-900 font-bold truncate">{user.name}</p>
-            </div>
-            <button
-              onClick={async () => { await logout(); }}
-              className="text-xs font-bold text-amber-700 bg-amber-100 px-3 py-1.5 rounded-xl whitespace-nowrap"
-            >
-              Cerrar sesión
-            </button>
-          </div>
-        )}
         <h2 className="text-xl font-bold text-slate-800 mb-1">¡Bienvenido de vuelta!</h2>
         <p className="text-slate-500 text-sm mb-6">Iniciá sesión con tu email universitario</p>
 
