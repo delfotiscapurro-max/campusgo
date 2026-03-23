@@ -3,6 +3,7 @@ import { MapPin, Clock, Users, Star, ChevronRight, Instagram, Leaf, Navigation }
 import { formatTime, formatDateShort } from '../../utils/dateUtils.js'
 import Avatar from '../ui/Avatar.jsx'
 import Badge from '../ui/Badge.jsx'
+import { UNIVERSITIES } from '../../data/universities.js'
 
 export default function TripCard({ trip, compact = false }) {
   const navigate = useNavigate()
@@ -12,6 +13,8 @@ export default function TripCard({ trip, compact = false }) {
   const takenSeats = seats.total - seats.available
   const isAlmostFull = seats.available <= 1
   const isRequest = type === 'request'
+  const isIda = UNIVERSITIES.includes(destination?.label)
+  const isVuelta = UNIVERSITIES.includes(origin?.label)
 
   return (
     <button
@@ -94,8 +97,15 @@ export default function TripCard({ trip, compact = false }) {
               <span className="text-[11px] font-semibold text-emerald-700">{trip.co2SavedKg}kg CO₂</span>
             </div>
           )}
-          <div className="bg-indigo-600 text-white px-3 py-1.5 rounded-full">
-            <span className="text-sm font-bold">${price.toLocaleString('es-AR')}</span>
+          <div className="flex flex-col items-end gap-0.5">
+            <div className="bg-indigo-600 text-white px-3 py-1.5 rounded-full">
+              <span className="text-sm font-bold">${price.toLocaleString('es-AR')}</span>
+            </div>
+            {(isIda || isVuelta) && (
+              <span className="text-[10px] font-semibold text-slate-400 px-1">
+                {isIda ? '→ Ida' : '← Vuelta'}
+              </span>
+            )}
           </div>
         </div>
       </div>
