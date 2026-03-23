@@ -18,50 +18,38 @@ import NotificationsPage from './pages/notifications/NotificationsPage.jsx'
 
 function LoadingScreen() {
   return (
-    <div className="min-h-dvh flex flex-col items-center justify-center gradient-bg relative overflow-hidden">
-      {/* Círculos decorativos de fondo */}
-      <div className="absolute top-[-60px] right-[-60px] w-52 h-52 bg-white/10 rounded-full" />
-      <div className="absolute bottom-[-80px] left-[-40px] w-64 h-64 bg-white/10 rounded-full" />
-      <div className="absolute top-1/3 left-[-30px] w-24 h-24 bg-white/5 rounded-full" />
+    <div className="min-h-dvh flex flex-col items-center justify-center gradient-bg-br relative overflow-hidden">
+      {/* Círculos decorativos */}
+      <div className="absolute top-[-80px] right-[-80px] w-64 h-64 bg-white/10 rounded-full" />
+      <div className="absolute bottom-[-100px] left-[-60px] w-72 h-72 bg-white/10 rounded-full" />
+      <div className="absolute top-1/2 right-[-50px] w-40 h-40 bg-white/5 rounded-full" />
 
-      {/* Logo */}
       <div className="relative z-10 flex flex-col items-center gap-6">
         {/* Ícono animado */}
-        <div className="relative">
-          <div className="w-24 h-24 bg-white/20 rounded-3xl flex items-center justify-center animate-pulse">
-            <svg viewBox="0 0 64 64" className="w-14 h-14" fill="none">
-              {/* Carretera */}
-              <rect x="8" y="44" width="48" height="8" rx="4" fill="white" opacity="0.3"/>
-              <rect x="29" y="45" width="6" height="2" rx="1" fill="white" opacity="0.6"/>
-              {/* Auto */}
-              <rect x="14" y="30" width="36" height="16" rx="5" fill="white" opacity="0.95"/>
-              <rect x="20" y="23" width="24" height="12" rx="4" fill="white" opacity="0.7"/>
-              {/* Ventanas */}
-              <rect x="22" y="25" width="8" height="7" rx="2" fill="#6366f1" opacity="0.6"/>
-              <rect x="34" y="25" width="8" height="7" rx="2" fill="#6366f1" opacity="0.6"/>
-              {/* Ruedas */}
-              <circle cx="22" cy="47" r="5" fill="#4f46e5"/>
-              <circle cx="22" cy="47" r="2.5" fill="white" opacity="0.5"/>
-              <circle cx="42" cy="47" r="5" fill="#4f46e5"/>
-              <circle cx="42" cy="47" r="2.5" fill="white" opacity="0.5"/>
-            </svg>
-          </div>
-          {/* Líneas de velocidad */}
-          <div className="absolute -left-6 top-1/2 -translate-y-1/2 flex flex-col gap-1.5">
-            <div className="h-0.5 bg-white/40 rounded-full animate-pulse" style={{width:'18px', animationDelay:'0s'}}/>
-            <div className="h-0.5 bg-white/40 rounded-full animate-pulse" style={{width:'12px', animationDelay:'0.15s'}}/>
-            <div className="h-0.5 bg-white/40 rounded-full animate-pulse" style={{width:'16px', animationDelay:'0.3s'}}/>
-          </div>
+        <div className="w-24 h-24 bg-white/20 rounded-3xl flex items-center justify-center animate-pulse">
+          <svg viewBox="0 0 64 64" className="w-20 h-20" fill="none">
+            {/* Carretera */}
+            <rect x="6" y="46" width="52" height="8" rx="4" fill="white" opacity="0.3"/>
+            <rect x="28" y="48" width="8" height="2" rx="1" fill="white" opacity="0.6"/>
+            {/* Auto */}
+            <rect x="10" y="30" width="44" height="18" rx="6" fill="white" opacity="0.95"/>
+            <rect x="17" y="20" width="30" height="14" rx="5" fill="white" opacity="0.75"/>
+            {/* Ventanas */}
+            <rect x="19" y="22" width="11" height="9" rx="2.5" fill="#6366f1" opacity="0.55"/>
+            <rect x="34" y="22" width="11" height="9" rx="2.5" fill="#6366f1" opacity="0.55"/>
+            {/* Ruedas */}
+            <circle cx="20" cy="49" r="6" fill="#4f46e5"/>
+            <circle cx="20" cy="49" r="3" fill="white" opacity="0.5"/>
+            <circle cx="44" cy="49" r="6" fill="#4f46e5"/>
+            <circle cx="44" cy="49" r="3" fill="white" opacity="0.5"/>
+          </svg>
         </div>
 
         {/* Nombre */}
-        <div className="text-center">
-          <h1 className="text-3xl font-black text-white tracking-tight">CampusGo</h1>
-          <p className="text-indigo-200 text-sm mt-1">Viajes universitarios 🎓</p>
-        </div>
+        <h1 className="text-3xl font-black text-white tracking-tight">CampusGo</h1>
 
         {/* Puntitos de carga */}
-        <div className="flex gap-2 mt-2">
+        <div className="flex gap-2">
           {[0, 1, 2].map(i => (
             <div
               key={i}
