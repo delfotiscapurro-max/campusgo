@@ -1,11 +1,10 @@
 import { useState } from 'react'
-import { Search, SlidersHorizontal, Leaf } from 'lucide-react'
+import { Search, SlidersHorizontal, Leaf, X, Check } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useTrips } from '../../context/TripsContext.jsx'
 import TopBar from '../../components/layout/TopBar.jsx'
 import TripCard from '../../components/trip/TripCard.jsx'
 import StoriesBar from '../../components/stories/StoriesBar.jsx'
-import { formatDate } from '../../utils/dateUtils.js'
 
 const DATE_FILTERS = [
   { key: 'all', label: 'Todos' },
@@ -19,17 +18,50 @@ const ROLE_FILTERS = [
   { key: 'request', label: '🙋 Busco viaje' },
 ]
 
+const SORT_OPTIONS = [
+  { key: 'time', label: '🕐 Hora de salida' },
+  { key: 'price', label: '💰 Menor precio' },
+  { key: 'rating', label: '⭐ Mejor conductor' },
+]
+
+const PRICE_OPTIONS = [
+  { key: 0, label: 'Sin límite' },
+  { key: 500, label: 'Hasta $500' },
+  { key: 1000, label: 'Hasta $1.000' },
+  { key: 1500, label: 'Hasta $1.500' },
+]
+
+const SEAT_OPTIONS = [
+  { key: 0, label: 'Cualquiera' },
+  { key: 1, label: '1+ lugar' },
+  { key: 2, label: '2+ lugares' },
+  { key: 3, label: '3+ lugares' },
+]
+
 export default function HomePage() {
   const { user } = useAuth()
   const { getFeedTrips } = useTrips()
   const [dateFilter, setDateFilter] = useState('all')
   const [roleFilter, setRoleFilter] = useState('all')
   const [search, setSearch] = useState('')
-  const [showSearch, setShowSearch] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
+
+  // Advanced filters
+  const [sortBy, setSortBy] = useState('time')
+  const [maxPrice, setMaxPrice] = useState(0)
+  const [minSeats, setMinSeats] = useState(0)
+  const [onlyVerified, setOnlyVerified] = useState(false)
+
+  const activeFilterCount = [
+    sortBy !== 'time',
+    maxPrice > 0,
+    minSeats > 0,
+    onlyVerified,
+  ].filter(Boolean).length
 
   const allTrips = getFeedTrips()
 
-  const filtered = allTrips.filter((trip) => {
+  let filtered = allTrips.filter((trip) => {
     if (roleFilter !== 'all' && trip.type !== roleFilter) return false
     if (dateFilter !== 'all') {
       const dep = new Date(trip.departureAt)
@@ -41,10 +73,17 @@ export default function HomePage() {
     }
     if (search) {
       const q = search.toLowerCase()
-      if (!trip.origin.label.toLowerCase().includes(q) && !trip.destination.label.toLowerCase().includes(q)) return false
+      if (!trip.origin?.label?.toLowerCase().includes(q) && !trip.destination?.label?.toLowerCase().includes(q)) return false
     }
+    if (maxPrice > 0 && trip.price > maxPrice) return false
+    if (minSeats > 0 && trip.seats?.available < minSeats) return false
+    if (onlyVerified && !trip.driver?.instagramVerified) return false
     return true
   })
+
+  if (sortBy === 'time') filtered.sort((a, b) => new Date(a.departureAt) - new Date(b.departureAt))
+  else if (sortBy === 'price') filtered.sort((a, b) => a.price - b.price)
+  else if (sortBy === 'rating') filtered.sort((a, b) => (b.driver?.rating || 0) - (a.driver?.rating || 0))
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches'
@@ -74,8 +113,16 @@ export default function HomePage() {
                 className="w-full bg-white rounded-2xl pl-10 pr-4 py-3 text-sm text-slate-700 placeholder-slate-400 border border-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-200 card-shadow"
               />
             </div>
-            <button className="w-11 h-11 bg-white rounded-2xl flex items-center justify-center card-shadow press-effect">
-              <SlidersHorizontal size={18} className="text-slate-500" />
+            <button
+              onClick={() => setShowFilters(true)}
+              className={`w-11 h-11 rounded-2xl flex items-center justify-center card-shadow press-effect relative ${activeFilterCount > 0 ? 'gradient-bg' : 'bg-white'}`}
+            >
+              <SlidersHorizontal size={18} className={activeFilterCount > 0 ? 'text-white' : 'text-slate-500'} />
+              {activeFilterCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
+                  {activeFilterCount}
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -93,7 +140,7 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Stories — Active Drivers */}
+        {/* Stories */}
         <div className="mb-2">
           <div className="flex items-center justify-between px-4 mb-3">
             <p className="text-slate-700 font-semibold text-sm">Conductores activos hoy</p>
@@ -101,16 +148,14 @@ export default function HomePage() {
           <StoriesBar />
         </div>
 
-        {/* Date filter */}
+        {/* Date + Role filter pills */}
         <div className="flex gap-2 px-4 overflow-x-auto hide-scrollbar mb-3">
           {DATE_FILTERS.map((f) => (
             <button
               key={f.key}
               onClick={() => setDateFilter(f.key)}
               className={`px-4 py-2 rounded-full text-sm font-semibold flex-shrink-0 transition-all press-effect ${
-                dateFilter === f.key
-                  ? 'gradient-bg text-white shadow-md'
-                  : 'bg-white text-slate-600 border border-slate-200'
+                dateFilter === f.key ? 'gradient-bg text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200'
               }`}
             >
               {f.label}
@@ -122,9 +167,7 @@ export default function HomePage() {
               key={f.key}
               onClick={() => setRoleFilter(f.key)}
               className={`px-4 py-2 rounded-full text-sm font-semibold flex-shrink-0 transition-all press-effect ${
-                roleFilter === f.key
-                  ? 'bg-violet-500 text-white shadow-md'
-                  : 'bg-white text-slate-600 border border-slate-200'
+                roleFilter === f.key ? 'bg-violet-500 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200'
               }`}
             >
               {f.label}
@@ -141,12 +184,110 @@ export default function HomePage() {
               <p className="text-slate-400 text-sm mt-1">Probá cambiando los filtros o publicá el tuyo</p>
             </div>
           ) : (
-            filtered.map((trip) => (
-              <TripCard key={trip.id} trip={trip} />
-            ))
+            filtered.map((trip) => <TripCard key={trip.id} trip={trip} />)
           )}
         </div>
       </div>
+
+      {/* Filter bottom sheet */}
+      {showFilters && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setShowFilters(false)} />
+          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white rounded-t-3xl z-50 px-5 pt-4 pb-[calc(1.5rem+var(--safe-bottom))]">
+            {/* Handle */}
+            <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4" />
+
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-slate-800">Filtros</h2>
+              <div className="flex items-center gap-2">
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={() => { setSortBy('time'); setMaxPrice(0); setMinSeats(0); setOnlyVerified(false) }}
+                    className="text-xs text-rose-500 font-semibold"
+                  >
+                    Limpiar todo
+                  </button>
+                )}
+                <button onClick={() => setShowFilters(false)} className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
+                  <X size={16} className="text-slate-500" />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-5 overflow-y-auto max-h-[70vh]">
+              {/* Ordenar por */}
+              <div>
+                <p className="text-sm font-bold text-slate-700 mb-2">Ordenar por</p>
+                <div className="flex flex-col gap-2">
+                  {SORT_OPTIONS.map(o => (
+                    <button
+                      key={o.key}
+                      onClick={() => setSortBy(o.key)}
+                      className={`flex items-center justify-between px-4 py-3 rounded-2xl border transition-all ${sortBy === o.key ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200 bg-white'}`}
+                    >
+                      <span className={`text-sm font-semibold ${sortBy === o.key ? 'text-indigo-700' : 'text-slate-700'}`}>{o.label}</span>
+                      {sortBy === o.key && <Check size={16} className="text-indigo-500" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Precio máximo */}
+              <div>
+                <p className="text-sm font-bold text-slate-700 mb-2">Precio máximo por persona</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {PRICE_OPTIONS.map(o => (
+                    <button
+                      key={o.key}
+                      onClick={() => setMaxPrice(o.key)}
+                      className={`py-2.5 rounded-2xl text-sm font-semibold border transition-all ${maxPrice === o.key ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`}
+                    >
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Lugares disponibles */}
+              <div>
+                <p className="text-sm font-bold text-slate-700 mb-2">Lugares disponibles</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {SEAT_OPTIONS.map(o => (
+                    <button
+                      key={o.key}
+                      onClick={() => setMinSeats(o.key)}
+                      className={`py-2.5 rounded-2xl text-sm font-semibold border transition-all ${minSeats === o.key ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`}
+                    >
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Solo verificados */}
+              <button
+                onClick={() => setOnlyVerified(v => !v)}
+                className={`flex items-center justify-between px-4 py-3.5 rounded-2xl border transition-all ${onlyVerified ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200 bg-white'}`}
+              >
+                <div className="text-left">
+                  <p className={`text-sm font-bold ${onlyVerified ? 'text-indigo-700' : 'text-slate-700'}`}>✨ Solo verificados</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Conductores con Instagram verificado</p>
+                </div>
+                <div className={`w-12 h-6 rounded-full transition-all ${onlyVerified ? 'gradient-bg' : 'bg-slate-200'} flex items-center px-1`}>
+                  <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${onlyVerified ? 'translate-x-6' : 'translate-x-0'}`} />
+                </div>
+              </button>
+
+              <button
+                onClick={() => setShowFilters(false)}
+                className="w-full gradient-bg text-white py-3.5 rounded-2xl font-bold text-sm"
+              >
+                Ver {filtered.length} viaje{filtered.length !== 1 ? 's' : ''}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
