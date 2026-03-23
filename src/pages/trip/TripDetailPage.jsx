@@ -17,7 +17,7 @@ export default function TripDetailPage() {
   const { getTrip, getTripById, enrichTrip, requestToJoin, acceptRequest, denyRequest, isLoading } = useTrips()
   const { user } = useAuth()
   const { addNotification } = useNotifications()
-  const [joinLoading, setJoinLoading] = useState(false)
+  const [joinLoading, setJoinLoading] = useState(null)
   const [joined, setJoined] = useState(false)
   const [actionLoading, setActionLoading] = useState(null)
   const [trip, setTrip] = useState(null)
@@ -61,15 +61,20 @@ export default function TripDetailPage() {
   const isFull = seats.available === 0
 
 
-  async function handleJoin() {
-    setJoinLoading(true)
+  async function handleJoin(role = 'passenger') {
+    setJoinLoading(role)
     await requestToJoin(trip.id, user.id)
+    const message = role === 'driver'
+      ? `${user.name} quiere ofrecerte su auto 🚗`
+      : trip.type === 'request'
+        ? `${user.name} también busca viaje y quiere ir con vos 👥`
+        : `${user.name} quiere unirse a tu viaje 🚗`
     await addNotification({
       recipientId: trip.driverId,
       type: 'join_request',
       tripId: trip.id,
       actorId: user.id,
-      message: `${user.name} quiere unirse a tu viaje 🚗`,
+      message,
       actions: ['accept', 'deny'],
     })
     setJoined(true)
@@ -304,12 +309,34 @@ export default function TripDetailPage() {
           <div className="flex-1 bg-slate-100 rounded-2xl py-3.5 flex items-center justify-center">
             <span className="text-slate-500 font-semibold">Auto completo 😕</span>
           </div>
+        ) : trip.type === 'request' ? (
+          <div className="flex gap-2 flex-1">
+            <Button
+              onClick={() => handleJoin('driver')}
+              loading={joinLoading === 'driver'}
+              disabled={!!joinLoading}
+              fullWidth
+              size="lg"
+            >
+              🚗 Ofrecer auto
+            </Button>
+            <Button
+              onClick={() => handleJoin('passenger')}
+              loading={joinLoading === 'passenger'}
+              disabled={!!joinLoading}
+              fullWidth
+              size="lg"
+              variant="secondary"
+            >
+              👥 Viajar juntos
+            </Button>
+          </div>
         ) : (
           <>
             <button onClick={() => navigate(`/trip/${trip.id}/chat`)} className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center press-effect flex-shrink-0">
               <MessageCircle size={20} className="text-slate-600" />
             </button>
-            <Button onClick={handleJoin} loading={joinLoading} fullWidth size="lg">
+            <Button onClick={() => handleJoin()} loading={joinLoading === 'passenger'} fullWidth size="lg">
               Solicitar unirme 🚗
             </Button>
           </>
