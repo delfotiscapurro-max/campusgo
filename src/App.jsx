@@ -15,6 +15,7 @@ import ProfilePage from './pages/profile/ProfilePage.jsx'
 import TripDetailPage from './pages/trip/TripDetailPage.jsx'
 import ChatPage from './pages/trip/ChatPage.jsx'
 import NotificationsPage from './pages/notifications/NotificationsPage.jsx'
+import CompleteProfilePage from './pages/auth/CompleteProfilePage.jsx'
 
 function LoadingScreen() {
   return (
@@ -60,8 +61,13 @@ function LoadingScreen() {
 }
 
 function ProtectedRoute({ children }) {
-  const { isAuthenticated } = useAuth()
-  return isAuthenticated ? children : <Navigate to="/login" replace />
+  const { isAuthenticated, user } = useAuth()
+  if (!isAuthenticated) return <Navigate to="/login" replace />
+  // OAuth users who haven't filled university yet
+  if (user && !user.university && window.location.pathname !== '/complete-profile') {
+    return <Navigate to="/complete-profile" replace />
+  }
+  return children
 }
 
 function AppRoutes() {
@@ -76,6 +82,7 @@ function AppRoutes() {
         <Route path="/login" element={isAuthenticated ? <Navigate to="/home" replace /> : <LoginPage />} />
         <Route path="/register" element={isAuthenticated ? <Navigate to="/home" replace /> : <RegisterPage />} />
 
+        <Route path="/complete-profile" element={isAuthenticated ? <CompleteProfilePage /> : <Navigate to="/login" replace />} />
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/discover" element={<ProtectedRoute><DiscoverPage /></ProtectedRoute>} />
         <Route path="/publish" element={<ProtectedRoute><PublishPage /></ProtectedRoute>} />

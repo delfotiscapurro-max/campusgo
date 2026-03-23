@@ -7,7 +7,7 @@ import Input from '../../components/ui/Input.jsx'
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { login, loginWithInstagram } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -110,7 +110,7 @@ export default function LoginPage() {
         {/* Instagram connect */}
         <button
           type="button"
-          onClick={() => handleLogin({ preventDefault: () => {} })}
+          onClick={loginWithInstagram}
           className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white py-3.5 rounded-2xl font-semibold text-sm press-effect"
         >
           <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">

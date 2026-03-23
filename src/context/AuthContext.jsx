@@ -40,31 +40,36 @@ export function AuthProvider({ children }) {
         }))
         setUser(profile)
       } else {
-        // Profile row doesn't exist yet (trigger may not have run) — use auth metadata
+        // Profile row doesn't exist yet — use auth metadata (works for email & OAuth)
         const { data: { user: authUser } } = await supabase.auth.getUser()
         if (authUser) {
           const meta = authUser.user_metadata || {}
-          // Try to create the profile row
+          const isOAuth = authUser.app_metadata?.provider === 'facebook'
+          const name = meta.full_name || meta.name || authUser.email?.split('@')[0] || 'Usuario'
+          const avatarUrl = meta.avatar_url || meta.picture || ''
           await supabase.from('profiles').upsert({
             id: userId,
-            name: meta.name || authUser.email?.split('@')[0] || 'Usuario',
+            name,
             email: authUser.email,
+            avatar_url: avatarUrl,
             university: meta.university || '',
             career: meta.career || '',
             year: meta.year || '',
-            instagram: meta.instagram || '',
+            instagram: meta.user_name || meta.instagram || '',
+            instagram_verified: isOAuth,
             bio: meta.bio || '',
             points: 100,
           }, { onConflict: 'id' })
           setUser({
             id: userId,
-            name: meta.name || authUser.email?.split('@')[0] || 'Usuario',
+            name,
             email: authUser.email,
+            avatar: avatarUrl,
             university: meta.university || '',
             career: meta.career || '',
             year: meta.year || '',
-            instagram: meta.instagram || '',
-            instagramVerified: false,
+            instagram: meta.user_name || meta.instagram || '',
+            instagramVerified: isOAuth,
             rating: 5.0,
             totalRatings: 0,
             tripsAsDriver: 0,
@@ -86,8 +91,18 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
-    // onAuthStateChange will call loadProfile and set isLoading = false
     return data.user
+  }, [])
+
+  const loginWithInstagram = useCallback(async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'facebook',
+      options: {
+        redirectTo: window.location.origin,
+        scopes: 'email,public_profile',
+      }
+    })
+    if (error) throw error
   }, [])
 
   const register = useCallback(async (formData) => {
@@ -183,7 +198,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={{
       user, isLoading,
       isAuthenticated: !!user,
-      login, register, logout, updateProfile, connectInstagram
+      login, loginWithInstagram, register, logout, updateProfile, connectInstagram
     }}>
       {children}
     </AuthContext.Provider>
