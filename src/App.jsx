@@ -61,13 +61,8 @@ function LoadingScreen() {
 }
 
 function ProtectedRoute({ children }) {
-  const { isAuthenticated, user } = useAuth()
-  if (!isAuthenticated) return <Navigate to="/login" replace />
-  // OAuth users who haven't filled university yet
-  if (user && !user.university && window.location.pathname !== '/complete-profile') {
-    return <Navigate to="/complete-profile" replace />
-  }
-  return children
+  const { isAuthenticated } = useAuth()
+  return isAuthenticated ? children : <Navigate to="/login" replace />
 }
 
 function AppRoutes() {
@@ -79,7 +74,7 @@ function AppRoutes() {
     <AppShell>
       <Routes>
         <Route path="/" element={<Navigate to={isAuthenticated ? '/home' : '/login'} replace />} />
-        <Route path="/login" element={isAuthenticated ? <Navigate to="/home" replace /> : <LoginPage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={isAuthenticated ? <Navigate to="/home" replace /> : <RegisterPage />} />
 
         <Route path="/complete-profile" element={isAuthenticated ? <CompleteProfilePage /> : <Navigate to="/login" replace />} />
