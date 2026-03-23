@@ -178,13 +178,14 @@ export default function PublishPage() {
             {form.type === 'offer' && (
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-slate-700">Asientos para ofrecer</label>
-                <div className="flex gap-2 flex-wrap">
-                  {Array.from({ length: user?.car?.seats || 4 }, (_, i) => i + 1).map(n => (
-                    <button key={n} onClick={() => update('seats', { total: n, available: n })} className={`flex-1 py-3 rounded-2xl text-sm font-bold transition-all press-effect ${form.seats.total === n ? 'gradient-bg text-white' : 'bg-white text-slate-600 border border-slate-200'}`}>
-                      {n}
-                    </button>
-                  ))}
-                </div>
+                <input
+                  type="number"
+                  min="1"
+                  max="20"
+                  value={form.seats.total}
+                  onChange={e => { const n = Math.max(1, parseInt(e.target.value) || 1); update('seats', { total: n, available: n }) }}
+                  className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-800 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                />
               </div>
             )}
             <Button onClick={() => setStep(4)} fullWidth size="lg">Continuar</Button>
