@@ -325,7 +325,7 @@ export default function ProfilePage() {
               </button>
             </div>
 
-            <div className="flex flex-col gap-4 overflow-y-auto max-h-[65vh]">
+            <div className="flex flex-col gap-4 overflow-y-auto max-h-[50vh] pb-1">
               {/* Nombre */}
               <div>
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Nombre</label>
@@ -383,15 +383,15 @@ export default function ProfilePage() {
                   ))}
                 </div>
               </div>
-
-              <button
-                onClick={handleSaveProfile}
-                disabled={saving || !editForm.name}
-                className="w-full gradient-bg text-white py-3.5 rounded-2xl font-bold text-sm disabled:opacity-50 mt-1"
-              >
-                {saving ? 'Guardando...' : 'Guardar cambios'}
-              </button>
             </div>
+
+            <button
+              onClick={handleSaveProfile}
+              disabled={saving || !editForm.name}
+              className="w-full gradient-bg text-white py-3.5 rounded-2xl font-bold text-sm disabled:opacity-50 mt-4"
+            >
+              {saving ? 'Guardando...' : 'Guardar cambios'}
+            </button>
           </div>
         </>
       )}
