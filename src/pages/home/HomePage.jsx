@@ -28,9 +28,16 @@ const MAX_PRICE_SLIDER = 30000
 
 const SEAT_OPTIONS = [
   { key: 0, label: 'Cualquiera' },
-  { key: 1, label: '1+ lugar' },
-  { key: 2, label: '2+ lugares' },
-  { key: 3, label: '3+ lugares' },
+  { key: 2, label: '2+' },
+  { key: 3, label: '3+' },
+  { key: 4, label: '4+' },
+  { key: 5, label: '5+' },
+  { key: 6, label: '6+' },
+  { key: 7, label: '7+' },
+  { key: 8, label: '8+' },
+  { key: 9, label: '9+' },
+  { key: 10, label: '10+' },
+  { key: 11, label: '11+' },
 ]
 
 export default function HomePage() {
@@ -260,12 +267,12 @@ export default function HomePage() {
               {/* Lugares disponibles */}
               <div>
                 <p className="text-sm font-bold text-slate-700 mb-2">Lugares disponibles</p>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="flex flex-wrap gap-2">
                   {SEAT_OPTIONS.map(o => (
                     <button
                       key={o.key}
                       onClick={() => setMinSeats(o.key)}
-                      className={`py-2.5 rounded-2xl text-sm font-semibold border transition-all ${minSeats === o.key ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`}
+                      className={`px-3 py-2 rounded-2xl text-sm font-semibold border transition-all ${minSeats === o.key ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`}
                     >
                       {o.label}
                     </button>
