@@ -34,8 +34,22 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!isOwnProfile && userId) {
-      supabase.from('profiles').select('*, reviews(reviewer_id, rating, text, created_at)').eq('id', userId).single()
-        .then(({ data }) => { if (data) setOtherUser(transformProfile(data)) })
+      supabase.from('profiles').select('*').eq('id', userId).single()
+        .then(async ({ data }) => {
+          if (!data) return
+          const profile = transformProfile(data)
+          const { data: reviewsData } = await supabase
+            .from('reviews')
+            .select('reviewer_id, rating, text, created_at')
+            .eq('reviewee_id', userId)
+          profile.reviews = (reviewsData || []).map(r => ({
+            rating: r.rating,
+            text: r.text,
+            date: r.created_at,
+            author: 'Usuario',
+          }))
+          setOtherUser(profile)
+        })
     }
   }, [userId, isOwnProfile])
 

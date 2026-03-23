@@ -29,6 +29,10 @@ export function NotificationsProvider({ children }) {
     return () => supabase.removeChannel(channel)
   }, [user?.id])
 
+  const refreshNotifications = useCallback(async () => {
+    await loadNotifications()
+  }, [user?.id])
+
   async function loadNotifications() {
     const { data } = await supabase
       .from('notifications')
@@ -127,7 +131,7 @@ export function NotificationsProvider({ children }) {
   return (
     <NotificationsContext.Provider value={{
       notifications, unreadCount,
-      markRead, markAllRead, respondToRequest, addNotification
+      markRead, markAllRead, respondToRequest, addNotification, refreshNotifications
     }}>
       {children}
     </NotificationsContext.Provider>

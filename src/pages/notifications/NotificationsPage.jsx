@@ -4,7 +4,7 @@ import { useNotifications } from '../../context/NotificationsContext.jsx'
 import Avatar from '../../components/ui/Avatar.jsx'
 import { formatRelative } from '../../utils/dateUtils.js'
 import TopBar from '../../components/layout/TopBar.jsx'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const typeConfig = {
   join_request: { emoji: '🚗', color: 'bg-indigo-50', border: 'border-indigo-100' },
@@ -15,9 +15,12 @@ const typeConfig = {
 }
 
 export default function NotificationsPage() {
-  const { notifications, markRead, markAllRead, respondToRequest, unreadCount } = useNotifications()
-  const navigate = useNavigate()
+  const { notifications, markRead, markAllRead, respondToRequest, unreadCount, refreshNotifications } = useNotifications()
   const [loadingId, setLoadingId] = useState(null)
+
+  useEffect(() => {
+    refreshNotifications()
+  }, [])
 
   async function handleRespond(notifId, action) {
     setLoadingId(notifId + action)
@@ -63,7 +66,7 @@ export default function NotificationsPage() {
               <div>
                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Hoy</p>
                 <div className="flex flex-col gap-2">
-                  {today.map(n => <NotificationItem key={n.id} notif={n} onRead={markRead} onRespond={handleRespond} loadingId={loadingId} onNavigate={navigate} />)}
+                  {today.map(n => <NotificationItem key={n.id} notif={n} onRead={markRead} onRespond={handleRespond} loadingId={loadingId} />)}
                 </div>
               </div>
             )}
@@ -71,7 +74,7 @@ export default function NotificationsPage() {
               <div>
                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Antes</p>
                 <div className="flex flex-col gap-2">
-                  {earlier.map(n => <NotificationItem key={n.id} notif={n} onRead={markRead} onRespond={handleRespond} loadingId={loadingId} onNavigate={navigate} />)}
+                  {earlier.map(n => <NotificationItem key={n.id} notif={n} onRead={markRead} onRespond={handleRespond} loadingId={loadingId} />)}
                 </div>
               </div>
             )}
@@ -82,13 +85,20 @@ export default function NotificationsPage() {
   )
 }
 
-function NotificationItem({ notif, onRead, onRespond, loadingId, onNavigate }) {
+function NotificationItem({ notif, onRead, onRespond, loadingId }) {
+  const navigate = useNavigate()
   const actor = notif.actor || null
   const config = typeConfig[notif.type] || typeConfig.trip_reminder
 
+  function handleActorTap(e) {
+    e.stopPropagation()
+    if (!notif.read) onRead(notif.id)
+    navigate(`/profile/${actor.id}`)
+  }
+
   function handleClick() {
     if (!notif.read) onRead(notif.id)
-    if (notif.tripId) onNavigate(`/trip/${notif.tripId}`)
+    if (notif.tripId) navigate(`/trip/${notif.tripId}`)
   }
 
   return (
@@ -98,7 +108,15 @@ function NotificationItem({ notif, onRead, onRespond, loadingId, onNavigate }) {
       <div className="flex items-start gap-3">
         {/* Icon or avatar */}
         {actor ? (
-          <Avatar src={actor.avatar} name={actor.name} size="md" verified={actor.instagramVerified} />
+          <button
+            type="button"
+            onClick={handleActorTap}
+            onTouchEnd={handleActorTap}
+            className="flex-shrink-0"
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'rgba(0,0,0,0)' }}
+          >
+            <Avatar src={actor.avatar} name={actor.name} size="md" verified={actor.instagramVerified} />
+          </button>
         ) : (
           <div className={`w-12 h-12 ${config.color} rounded-2xl flex items-center justify-center flex-shrink-0 text-xl`}>
             {config.emoji}
@@ -121,7 +139,7 @@ function NotificationItem({ notif, onRead, onRespond, loadingId, onNavigate }) {
           {notif.actions?.length > 0 && (
             <div className="flex gap-2 mt-3">
               <button
-                onClick={() => onRespond(notif.id, 'deny')}
+                onClick={(e) => { e.stopPropagation(); onRespond(notif.id, 'deny') }}
                 disabled={!!loadingId}
                 className="flex items-center gap-1.5 px-4 py-2 bg-rose-50 text-rose-600 rounded-full text-sm font-semibold press-effect disabled:opacity-50"
               >
@@ -129,7 +147,7 @@ function NotificationItem({ notif, onRead, onRespond, loadingId, onNavigate }) {
                 {loadingId === notif.id + 'deny' ? '...' : 'Rechazar'}
               </button>
               <button
-                onClick={() => onRespond(notif.id, 'accept')}
+                onClick={(e) => { e.stopPropagation(); onRespond(notif.id, 'accept') }}
                 disabled={!!loadingId}
                 className="flex items-center gap-1.5 px-4 py-2 bg-emerald-500 text-white rounded-full text-sm font-semibold press-effect disabled:opacity-50"
               >
@@ -142,7 +160,7 @@ function NotificationItem({ notif, onRead, onRespond, loadingId, onNavigate }) {
           {/* View trip link */}
           {notif.tripId && !notif.actions?.length && (
             <button
-              onClick={handleClick}
+              onClick={(e) => { e.stopPropagation(); handleClick() }}
               className="flex items-center gap-1 mt-2 text-indigo-600 text-xs font-semibold press-effect"
             >
               Ver viaje <ChevronRight size={12} />
