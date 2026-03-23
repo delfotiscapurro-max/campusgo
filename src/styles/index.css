@@ -16,7 +16,6 @@
 body {
   overscroll-behavior: none;
   font-family: 'Inter', system-ui, sans-serif;
-  background-color: #7c3aed;
 }
 
 #root {
