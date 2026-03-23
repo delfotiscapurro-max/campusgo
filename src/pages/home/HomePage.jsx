@@ -5,6 +5,7 @@ import { useTrips } from '../../context/TripsContext.jsx'
 import TopBar from '../../components/layout/TopBar.jsx'
 import TripCard from '../../components/trip/TripCard.jsx'
 import StoriesBar from '../../components/stories/StoriesBar.jsx'
+import { UNIVERSITIES } from '../../data/universities.js'
 
 const DATE_FILTERS = [
   { key: 'all', label: 'Todos' },
@@ -24,12 +25,7 @@ const SORT_OPTIONS = [
   { key: 'rating', label: '⭐ Mejor conductor' },
 ]
 
-const PRICE_OPTIONS = [
-  { key: 0, label: 'Sin límite' },
-  { key: 500, label: 'Hasta $500' },
-  { key: 1000, label: 'Hasta $1.000' },
-  { key: 1500, label: 'Hasta $1.500' },
-]
+const MAX_PRICE_SLIDER = 3000
 
 const SEAT_OPTIONS = [
   { key: 0, label: 'Cualquiera' },
@@ -51,12 +47,14 @@ export default function HomePage() {
   const [maxPrice, setMaxPrice] = useState(0)
   const [minSeats, setMinSeats] = useState(0)
   const [onlyVerified, setOnlyVerified] = useState(false)
+  const [destFilter, setDestFilter] = useState('')
 
   const activeFilterCount = [
     sortBy !== 'time',
     maxPrice > 0,
     minSeats > 0,
     onlyVerified,
+    destFilter !== '',
   ].filter(Boolean).length
 
   const allTrips = getFeedTrips()
@@ -78,6 +76,7 @@ export default function HomePage() {
     if (maxPrice > 0 && trip.price > maxPrice) return false
     if (minSeats > 0 && trip.seats?.available < minSeats) return false
     if (onlyVerified && !trip.driver?.instagramVerified) return false
+    if (destFilter && !trip.destination?.label?.toLowerCase().includes(destFilter.toLowerCase())) return false
     return true
   })
 
@@ -202,7 +201,7 @@ export default function HomePage() {
               <div className="flex items-center gap-2">
                 {activeFilterCount > 0 && (
                   <button
-                    onClick={() => { setSortBy('time'); setMaxPrice(0); setMinSeats(0); setOnlyVerified(false) }}
+                    onClick={() => { setSortBy('time'); setMaxPrice(0); setMinSeats(0); setOnlyVerified(false); setDestFilter('') }}
                     className="text-xs text-rose-500 font-semibold"
                   >
                     Limpiar todo
@@ -232,19 +231,53 @@ export default function HomePage() {
                 </div>
               </div>
 
+              {/* Destino */}
+              <div>
+                <p className="text-sm font-bold text-slate-700 mb-2">Destino</p>
+                <div className="relative">
+                  <select
+                    value={destFilter}
+                    onChange={e => setDestFilter(e.target.value)}
+                    className="w-full appearance-none bg-white border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  >
+                    <option value="">Cualquier destino</option>
+                    {UNIVERSITIES.map(u => (
+                      <option key={u} value={u}>{u}</option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </div>
+                </div>
+              </div>
+
               {/* Precio máximo */}
               <div>
-                <p className="text-sm font-bold text-slate-700 mb-2">Precio máximo por persona</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {PRICE_OPTIONS.map(o => (
-                    <button
-                      key={o.key}
-                      onClick={() => setMaxPrice(o.key)}
-                      className={`py-2.5 rounded-2xl text-sm font-semibold border transition-all ${maxPrice === o.key ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`}
-                    >
-                      {o.label}
-                    </button>
-                  ))}
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-bold text-slate-700">Precio máximo por persona</p>
+                  <span className={`text-sm font-bold ${maxPrice > 0 ? 'text-indigo-600' : 'text-slate-400'}`}>
+                    {maxPrice === 0 ? 'Sin límite' : `$${maxPrice.toLocaleString('es-AR')}`}
+                  </span>
+                </div>
+                <div className="px-1">
+                  <input
+                    type="range"
+                    min={0}
+                    max={MAX_PRICE_SLIDER}
+                    step={100}
+                    value={maxPrice}
+                    onChange={e => setMaxPrice(Number(e.target.value))}
+                    className="w-full h-2 rounded-full appearance-none cursor-pointer"
+                    style={{
+                      background: maxPrice === 0
+                        ? '#e2e8f0'
+                        : `linear-gradient(to right, #6366f1 0%, #8b5cf6 ${(maxPrice / MAX_PRICE_SLIDER) * 100}%, #e2e8f0 ${(maxPrice / MAX_PRICE_SLIDER) * 100}%)`,
+                    }}
+                  />
+                  <div className="flex justify-between mt-1.5">
+                    <span className="text-xs text-slate-400">$0</span>
+                    <span className="text-xs text-slate-400">${MAX_PRICE_SLIDER.toLocaleString('es-AR')}</span>
+                  </div>
                 </div>
               </div>
 
