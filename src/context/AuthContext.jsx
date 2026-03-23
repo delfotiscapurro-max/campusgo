@@ -173,6 +173,7 @@ export function AuthProvider({ children }) {
     if (fields.bio) dbFields.bio = fields.bio
     if (fields.university) dbFields.university = fields.university
     if (fields.career) dbFields.career = fields.career
+    if (fields.year !== undefined) dbFields.year = fields.year
     if (fields.car !== undefined) dbFields.car = fields.car
     if (fields.instagram !== undefined) dbFields.instagram = fields.instagram
     if (fields.instagramVerified !== undefined) dbFields.instagram_verified = fields.instagramVerified

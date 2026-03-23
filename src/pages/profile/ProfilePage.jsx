@@ -1,12 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Star, Car, Instagram, Settings, LogOut, Trophy, Leaf, Edit3, ChevronRight, Check, Shield } from 'lucide-react'
+import { Star, Car, Instagram, Settings, LogOut, Trophy, Leaf, Edit3, ChevronRight, Check, Shield, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { supabase, transformProfile } from '../../lib/supabase.js'
 import Avatar from '../../components/ui/Avatar.jsx'
 import Badge from '../../components/ui/Badge.jsx'
 import Button from '../../components/ui/Button.jsx'
 import TopBar from '../../components/layout/TopBar.jsx'
+import { UNIVERSITIES } from '../../data/universities.js'
+
+const YEAR_OPTIONS = ['1°', '2°', '3°', '4°', '5°', '6°', 'Posgrado']
 
 export default function ProfilePage() {
   const { userId } = useParams()
@@ -18,6 +21,9 @@ export default function ProfilePage() {
   const [tab, setTab] = useState('info')
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const avatarInputRef = useRef(null)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editForm, setEditForm] = useState({})
+  const [saving, setSaving] = useState(false)
 
   const isOwnProfile = !userId || userId === currentUser?.id
   const [otherUser, setOtherUser] = useState(null)
@@ -54,6 +60,23 @@ export default function ProfilePage() {
     setUploadingAvatar(false)
   }
 
+  const openEditModal = () => {
+    setEditForm({
+      name: currentUser?.name || '',
+      university: currentUser?.university || '',
+      career: currentUser?.career || '',
+      year: currentUser?.year || '',
+    })
+    setShowEditModal(true)
+  }
+
+  const handleSaveProfile = async () => {
+    setSaving(true)
+    await updateProfile(editForm)
+    setSaving(false)
+    setShowEditModal(false)
+  }
+
   const handleConnectInstagram = async () => {
     setConnecting(true)
     await connectInstagram(instaHandle)
@@ -71,7 +94,10 @@ export default function ProfilePage() {
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-10 -translate-x-12" />
 
         {isOwnProfile && (
-          <div className="flex justify-end mb-2 relative z-10">
+          <div className="flex justify-between mb-2 relative z-10">
+            <button onClick={openEditModal} className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center press-effect">
+              <Edit3 size={16} className="text-white" />
+            </button>
             <button onClick={handleLogout} className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center press-effect">
               <LogOut size={16} className="text-white" />
             </button>
@@ -285,6 +311,90 @@ export default function ProfilePage() {
           </>
         )}
       </div>
+
+      {/* Edit profile bottom sheet */}
+      {showEditModal && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setShowEditModal(false)} />
+          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white rounded-t-3xl z-50 px-5 pt-4 pb-[calc(2rem+var(--safe-bottom))]">
+            <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4" />
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-slate-800">Editar perfil</h2>
+              <button onClick={() => setShowEditModal(false)} className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
+                <X size={16} className="text-slate-500" />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-4 overflow-y-auto max-h-[65vh]">
+              {/* Nombre */}
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Nombre</label>
+                <input
+                  value={editForm.name}
+                  onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  placeholder="Tu nombre completo"
+                />
+              </div>
+
+              {/* Universidad */}
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Universidad / Facultad</label>
+                <div className="relative">
+                  <select
+                    value={editForm.university}
+                    onChange={e => setEditForm(f => ({ ...f, university: e.target.value }))}
+                    className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  >
+                    <option value="">Seleccioná tu facultad</option>
+                    {UNIVERSITIES.map(u => (
+                      <option key={u} value={u}>{u}</option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* Carrera */}
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Carrera</label>
+                <input
+                  value={editForm.career}
+                  onChange={e => setEditForm(f => ({ ...f, career: e.target.value }))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  placeholder="Ej: Ingeniería en Sistemas"
+                />
+              </div>
+
+              {/* Año */}
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Año</label>
+                <div className="flex gap-2 flex-wrap">
+                  {YEAR_OPTIONS.map(y => (
+                    <button
+                      key={y}
+                      onClick={() => setEditForm(f => ({ ...f, year: y }))}
+                      className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all ${editForm.year === y ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`}
+                    >
+                      {y}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={handleSaveProfile}
+                disabled={saving || !editForm.name}
+                className="w-full gradient-bg text-white py-3.5 rounded-2xl font-bold text-sm disabled:opacity-50 mt-1"
+              >
+                {saving ? 'Guardando...' : 'Guardar cambios'}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Instagram modal */}
       {showInstaModal && (
