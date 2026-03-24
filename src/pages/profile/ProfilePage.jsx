@@ -217,15 +217,27 @@ export default function ProfilePage() {
               )}
             </div>
             {profileUser?.instagramVerified && (
-              <div className="bg-gradient-to-r from-pink-500 to-violet-600 px-3 py-1.5 rounded-full flex items-center gap-1">
+              <a
+                href={`https://instagram.com/${profileUser.instagram?.replace('@', '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-gradient-to-r from-pink-500 to-violet-600 px-3 py-1.5 rounded-full flex items-center gap-1"
+              >
                 <Instagram size={11} className="text-white" />
                 <span className="text-white text-xs font-semibold">Verificado</span>
-              </div>
+              </a>
             )}
           </div>
 
           {profileUser?.instagram && (
-            <p className="text-indigo-200 text-sm mt-2">{profileUser.instagram}</p>
+            <a
+              href={`https://instagram.com/${profileUser.instagram?.replace('@', '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-indigo-200 text-sm mt-2 hover:text-white transition-colors"
+            >
+              {profileUser.instagram}
+            </a>
           )}
         </div>
       </div>
