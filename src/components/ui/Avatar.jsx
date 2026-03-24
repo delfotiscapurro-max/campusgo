@@ -1,5 +1,3 @@
-import { Instagram } from 'lucide-react'
-
 export default function Avatar({ src, name, size = 'md', verified = false, className = '' }) {
   const sizes = {
     xs: 'w-7 h-7 text-xs',
@@ -37,7 +35,7 @@ export default function Avatar({ src, name, size = 'md', verified = false, class
       </div>
       {verified && (
         <div className={`absolute ${badgeSizes[size]} bg-gradient-to-br from-pink-500 to-violet-600 rounded-full flex items-center justify-center ring-2 ring-white`}>
-          <Instagram size={size === 'xl' ? 14 : size === 'lg' ? 10 : 8} className="text-white" />
+          <svg width={size === 'xl' ? 10 : 7} height={size === 'xl' ? 10 : 7} viewBox="0 0 8 8" fill="none"><path d="M1.5 4L3.2 5.7L6.5 2.3" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </div>
       )}
     </div>
