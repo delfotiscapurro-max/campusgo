@@ -34,10 +34,9 @@ export default function TripCard({ trip, compact = false }) {
             <div className="flex items-center gap-1.5">
               <span className="font-semibold text-slate-800 text-sm">{driver?.name || 'Buscando conductor'}</span>
               {driver?.instagramVerified && (
-                <Badge variant="verified" size="xs">
-                  <Instagram size={8} />
-                  <span>Verificado</span>
-                </Badge>
+                <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-br from-pink-500 to-violet-600 flex items-center justify-center flex-shrink-0">
+                  <svg width="7" height="7" viewBox="0 0 8 8" fill="none"><path d="M1.5 4L3.2 5.7L6.5 2.3" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </span>
               )}
             </div>
             <div className="flex items-center gap-1 mt-0.5">
