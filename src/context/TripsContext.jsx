@@ -217,52 +217,14 @@ export function TripsProvider({ children }) {
   }, [myTrips, confirmations])
 
   const confirmTrip = useCallback(async (tripId, attended) => {
-    // 1. Save confirmation
     await supabase.from('trip_confirmations')
       .upsert({ trip_id: tripId, user_id: user.id, attended })
 
-    // 2. Update local confirmations
     setConfirmations(prev => [...prev.filter(c => c.trip_id !== tripId), { trip_id: tripId, attended }])
 
-    // 3. Get all confirmations for this trip
-    const { data: allConfs } = await supabase
-      .from('trip_confirmations')
-      .select('user_id, attended')
-      .eq('trip_id', tripId)
-
-    const trip = myTrips.find(t => t.id === tripId)
-    if (!trip) return
-
-    const driverConf = allConfs?.find(c => c.user_id === trip.driverId)
-    const passengerConfs = allConfs?.filter(c => c.user_id !== trip.driverId) || []
-
-    const driverYes = driverConf?.attended === true
-    const anyPassengerYes = passengerConfs.some(c => c.attended === true)
-    const driverNo = driverConf?.attended === false
-    const allPassengersNo = passengerConfs.length > 0 && passengerConfs.every(c => c.attended === false)
-
-    if (driverYes && anyPassengerYes) {
-      // Mark trip completed
-      await supabase.from('trips').update({ status: 'completed' }).eq('id', tripId)
-
-      // Increment driver count
-      const { data: drv } = await supabase.from('profiles').select('trips_as_driver').eq('id', trip.driverId).single()
-      await supabase.from('profiles').update({ trips_as_driver: (drv?.trips_as_driver || 0) + 1 }).eq('id', trip.driverId)
-
-      // Increment passenger count for those who attended
-      for (const conf of passengerConfs.filter(c => c.attended === true)) {
-        const { data: pax } = await supabase.from('profiles').select('trips_as_passenger').eq('id', conf.user_id).single()
-        await supabase.from('profiles').update({ trips_as_passenger: (pax?.trips_as_passenger || 0) + 1 }).eq('id', conf.user_id)
-      }
-
-      setMyTrips(prev => prev.map(t => t.id === tripId ? { ...t, status: 'completed' } : t))
-      await refreshProfile()
-
-    } else if (driverNo && allPassengersNo) {
-      await supabase.from('trips').update({ status: 'cancelled' }).eq('id', tripId)
-      setMyTrips(prev => prev.map(t => t.id === tripId ? { ...t, status: 'cancelled' } : t))
-    }
-  }, [user, myTrips])
+    await loadMyTrips()
+    await refreshProfile()
+  }, [user, refreshProfile])
 
   const cancelTrip = useCallback(async (tripId) => {
     await supabase.from('trips')
