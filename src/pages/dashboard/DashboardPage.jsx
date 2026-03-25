@@ -1,30 +1,31 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Car, Users, Leaf, Star, Trophy, Clock, CheckCircle, XCircle, ChevronRight } from 'lucide-react'
+import { Car, Users, Clock, CheckCircle, XCircle, ChevronRight, MapPin } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useTrips } from '../../context/TripsContext.jsx'
 import TopBar from '../../components/layout/TopBar.jsx'
-import Avatar from '../../components/ui/Avatar.jsx'
-import StatCard from '../../components/ui/StatCard.jsx'
 import { formatTime, formatDateShort } from '../../utils/dateUtils.js'
 
 export default function DashboardPage() {
   const { user } = useAuth()
-  const { getUserTrips } = useTrips()
+  const { getUserTrips, confirmTrip, getPendingConfirmationTrips } = useTrips()
   const navigate = useNavigate()
   const [tab, setTab] = useState('upcoming')
+  const [confirming, setConfirming] = useState(null)
 
   const myTrips = getUserTrips(user?.id)
   const now = new Date()
   const upcoming = myTrips.filter(t => new Date(t.departureAt) > now && t.status !== 'completed' && t.status !== 'cancelled')
   const completed = myTrips.filter(t => t.status === 'completed')
-  const asDriver = myTrips.filter(t => t.driverId === user?.id)
-  const asPassenger = myTrips.filter(t => (t.passengerIds || []).includes(user?.id))
+  const pendingConfirmations = getPendingConfirmationTrips()
 
   const displayed = tab === 'upcoming' ? upcoming : completed
 
-  const co2Total = user?.co2SavedKg || 0
-  const pointsTotal = user?.points || 0
+  const handleConfirm = async (tripId, attended) => {
+    setConfirming(tripId)
+    await confirmTrip(tripId, attended)
+    setConfirming(null)
+  }
 
   const statusConfig = {
     open: { icon: Clock, label: 'Abierto', color: 'text-indigo-600 bg-indigo-50' },
@@ -38,60 +39,50 @@ export default function DashboardPage() {
       <TopBar title="Mis viajes" />
       <div className="px-4 pt-4 page-enter">
 
-        {/* User summary */}
+        {/* Viajes por confirmar */}
         <div className="gradient-bg-br rounded-3xl p-5 mb-4 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-12 translate-x-12" />
-          <div className="flex items-center gap-3 mb-4 relative z-10">
-            <Avatar src={user?.avatar} name={user?.name} size="md" verified={user?.instagramVerified} />
-            <div>
-              <p className="text-white font-bold">{user?.name}</p>
-              <p className="text-indigo-200 text-sm">{user?.university}</p>
-            </div>
-            <div className="ml-auto flex items-center gap-1 bg-white/20 px-3 py-1.5 rounded-full">
-              <Trophy size={14} className="text-amber-300" />
-              <span className="text-white font-bold text-sm">{pointsTotal.toLocaleString()}</span>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-2 relative z-10">
-            <div className="bg-white/15 rounded-2xl p-3 text-center">
-              <p className="text-white text-xl font-black">{user?.tripsAsDriver || 0}</p>
-              <p className="text-indigo-200 text-[11px] font-medium">como conductor</p>
-            </div>
-            <div className="bg-white/15 rounded-2xl p-3 text-center">
-              <p className="text-white text-xl font-black">{user?.tripsAsPassenger || 0}</p>
-              <p className="text-indigo-200 text-[11px] font-medium">como pasajero</p>
-            </div>
-            <div className="bg-white/15 rounded-2xl p-3 text-center">
-              <div className="flex items-center justify-center gap-0.5">
-                <Star size={14} className="text-amber-300 fill-amber-300" />
-                <p className="text-white text-xl font-black">{user?.rating?.toFixed(1)}</p>
-              </div>
-              <p className="text-indigo-200 text-[11px] font-medium">calificación</p>
-            </div>
-          </div>
-        </div>
+          <p className="text-white font-bold text-base mb-1 relative z-10">¿Realizaste estos viajes?</p>
+          <p className="text-indigo-200 text-xs mb-4 relative z-10">Confirmá para registrar tu historial</p>
 
-        {/* Stats row */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <StatCard emoji="🌎" value={`${co2Total}kg`} label="CO₂ ahorrado" color="emerald" />
-          <StatCard emoji="⭐" value={`${pointsTotal.toLocaleString()}`} label="Puntos ganados" color="amber" />
-        </div>
-
-        {/* Level progress */}
-        <div className="bg-white rounded-3xl p-4 card-shadow mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">🏆</span>
-              <div>
-                <p className="font-bold text-slate-800 text-sm">Nivel Explorador</p>
-                <p className="text-xs text-slate-400">{pointsTotal} / 2000 puntos para Aventurero</p>
-              </div>
+          {pendingConfirmations.length === 0 ? (
+            <div className="bg-white/10 rounded-2xl p-4 text-center relative z-10">
+              <p className="text-white/80 text-sm">Todo al día</p>
+              <p className="text-indigo-200 text-xs mt-0.5">No hay viajes pendientes de confirmar</p>
             </div>
-            <span className="text-indigo-600 font-bold text-sm">{Math.round((pointsTotal / 2000) * 100)}%</span>
-          </div>
-          <div className="h-2 bg-slate-100 rounded-full">
-            <div className="h-2 gradient-bg rounded-full transition-all duration-700" style={{ width: `${Math.min((pointsTotal / 2000) * 100, 100)}%` }} />
-          </div>
+          ) : (
+            <div className="flex flex-col gap-2 relative z-10">
+              {pendingConfirmations.map(trip => {
+                const isDriver = trip.driverId === user?.id
+                const isLoading = confirming === trip.id
+                return (
+                  <div key={trip.id} className="bg-white/10 rounded-2xl p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      {isDriver ? <Car size={14} className="text-indigo-200" /> : <Users size={14} className="text-indigo-200" />}
+                      <span className="text-white text-xs font-semibold truncate">{trip.origin?.label} → {trip.destination?.label}</span>
+                      <span className="text-indigo-300 text-xs ml-auto flex-shrink-0">{formatTime(trip.departureAt)} · {formatDateShort(trip.departureAt)}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        disabled={isLoading}
+                        onClick={() => handleConfirm(trip.id, true)}
+                        className="flex-1 bg-emerald-400/30 hover:bg-emerald-400/50 text-white text-xs font-semibold py-2 rounded-xl transition-colors disabled:opacity-50"
+                      >
+                        ✓ Sí, fui
+                      </button>
+                      <button
+                        disabled={isLoading}
+                        onClick={() => handleConfirm(trip.id, false)}
+                        className="flex-1 bg-white/10 hover:bg-white/20 text-indigo-200 text-xs font-semibold py-2 rounded-xl transition-colors disabled:opacity-50"
+                      >
+                        ✗ No fui
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {/* Tabs */}

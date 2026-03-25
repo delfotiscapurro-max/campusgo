@@ -77,6 +77,15 @@ CREATE TABLE IF NOT EXISTS public.notifications (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Confirmaciones de viaje
+CREATE TABLE IF NOT EXISTS public.trip_confirmations (
+  trip_id UUID REFERENCES public.trips(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  attended BOOLEAN NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (trip_id, user_id)
+);
+
 -- Reseñas
 CREATE TABLE IF NOT EXISTS public.reviews (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,

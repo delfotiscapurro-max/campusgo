@@ -8,6 +8,7 @@ export function TripsProvider({ children }) {
   const { user } = useAuth()
   const [trips, setTrips] = useState([])
   const [myTrips, setMyTrips] = useState([])
+  const [confirmations, setConfirmations] = useState([])
   const [isLoading, setIsLoading] = useState(false)
 
   // Load feed trips on mount
@@ -15,9 +16,12 @@ export function TripsProvider({ children }) {
     loadFeed()
   }, [])
 
-  // Load my trips when user changes
+  // Load my trips and confirmations when user changes
   useEffect(() => {
-    if (user?.id) loadMyTrips()
+    if (user?.id) {
+      loadMyTrips()
+      loadConfirmations()
+    }
   }, [user?.id])
 
   async function loadFeed() {
@@ -62,6 +66,15 @@ export function TripsProvider({ children }) {
     }).sort((a, b) => new Date(b.departureAt) - new Date(a.departureAt))
 
     setMyTrips(all)
+  }
+
+  async function loadConfirmations() {
+    if (!user?.id) return
+    const { data } = await supabase
+      .from('trip_confirmations')
+      .select('trip_id, attended')
+      .eq('user_id', user.id)
+    setConfirmations(data || [])
   }
 
   const getTrip = useCallback((id) => {
@@ -174,10 +187,6 @@ export function TripsProvider({ children }) {
         })
         .eq('id', tripId)
 
-      // 4. Update passenger trip count
-      await supabase.from('profiles')
-        .update({ trips_as_passenger: (await supabase.from('profiles').select('trips_as_passenger').eq('id', userId).single()).data?.trips_as_passenger + 1 || 1 })
-        .eq('id', userId)
     }
 
     // Refresh feed
@@ -198,6 +207,62 @@ export function TripsProvider({ children }) {
     ))
   }, [])
 
+  const getPendingConfirmationTrips = useCallback(() => {
+    const now = new Date()
+    return myTrips.filter(t =>
+      new Date(t.departureAt) < now &&
+      ['open', 'full'].includes(t.status) &&
+      !confirmations.find(c => c.trip_id === t.id)
+    )
+  }, [myTrips, confirmations])
+
+  const confirmTrip = useCallback(async (tripId, attended) => {
+    // 1. Save confirmation
+    await supabase.from('trip_confirmations')
+      .upsert({ trip_id: tripId, user_id: user.id, attended })
+
+    // 2. Update local confirmations
+    setConfirmations(prev => [...prev.filter(c => c.trip_id !== tripId), { trip_id: tripId, attended }])
+
+    // 3. Get all confirmations for this trip
+    const { data: allConfs } = await supabase
+      .from('trip_confirmations')
+      .select('user_id, attended')
+      .eq('trip_id', tripId)
+
+    const trip = myTrips.find(t => t.id === tripId)
+    if (!trip) return
+
+    const driverConf = allConfs?.find(c => c.user_id === trip.driverId)
+    const passengerConfs = allConfs?.filter(c => c.user_id !== trip.driverId) || []
+
+    const driverYes = driverConf?.attended === true
+    const anyPassengerYes = passengerConfs.some(c => c.attended === true)
+    const driverNo = driverConf?.attended === false
+    const allPassengersNo = passengerConfs.length > 0 && passengerConfs.every(c => c.attended === false)
+
+    if (driverYes && anyPassengerYes) {
+      // Mark trip completed
+      await supabase.from('trips').update({ status: 'completed' }).eq('id', tripId)
+
+      // Increment driver count
+      const { data: drv } = await supabase.from('profiles').select('trips_as_driver').eq('id', trip.driverId).single()
+      await supabase.from('profiles').update({ trips_as_driver: (drv?.trips_as_driver || 0) + 1 }).eq('id', trip.driverId)
+
+      // Increment passenger count for those who attended
+      for (const conf of passengerConfs.filter(c => c.attended === true)) {
+        const { data: pax } = await supabase.from('profiles').select('trips_as_passenger').eq('id', conf.user_id).single()
+        await supabase.from('profiles').update({ trips_as_passenger: (pax?.trips_as_passenger || 0) + 1 }).eq('id', conf.user_id)
+      }
+
+      setMyTrips(prev => prev.map(t => t.id === tripId ? { ...t, status: 'completed' } : t))
+
+    } else if (driverNo && allPassengersNo) {
+      await supabase.from('trips').update({ status: 'cancelled' }).eq('id', tripId)
+      setMyTrips(prev => prev.map(t => t.id === tripId ? { ...t, status: 'cancelled' } : t))
+    }
+  }, [user, myTrips])
+
   const cancelTrip = useCallback(async (tripId) => {
     await supabase.from('trips')
       .update({ status: 'cancelled' })
@@ -212,7 +277,7 @@ export function TripsProvider({ children }) {
       trips, myTrips, isLoading,
       getTrip, getTripById, enrichTrip,
       getFeedTrips, getUserTrips,
-      publishTrip, requestToJoin, acceptRequest, denyRequest, cancelTrip,
+      publishTrip, requestToJoin, acceptRequest, denyRequest, cancelTrip, confirmTrip, getPendingConfirmationTrips,
       loadFeed, loadMyTrips,
     }}>
       {children}
