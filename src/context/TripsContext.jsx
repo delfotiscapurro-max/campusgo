@@ -5,7 +5,7 @@ import { useAuth } from './AuthContext.jsx'
 const TripsContext = createContext(null)
 
 export function TripsProvider({ children }) {
-  const { user } = useAuth()
+  const { user, refreshProfile } = useAuth()
   const [trips, setTrips] = useState([])
   const [myTrips, setMyTrips] = useState([])
   const [confirmations, setConfirmations] = useState([])
@@ -256,6 +256,7 @@ export function TripsProvider({ children }) {
       }
 
       setMyTrips(prev => prev.map(t => t.id === tripId ? { ...t, status: 'completed' } : t))
+      await refreshProfile()
 
     } else if (driverNo && allPassengersNo) {
       await supabase.from('trips').update({ status: 'cancelled' }).eq('id', tripId)
