@@ -12,6 +12,7 @@ export default function DashboardPage() {
   const navigate = useNavigate()
   const [tab, setTab] = useState('upcoming')
   const [confirming, setConfirming] = useState(null)
+  const [showAllConfirmations, setShowAllConfirmations] = useState(false)
 
   const myTrips = getUserTrips(user?.id)
   const now = new Date()
@@ -52,7 +53,7 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="flex flex-col gap-2 relative z-10">
-              {pendingConfirmations.map(trip => {
+              {(showAllConfirmations ? pendingConfirmations : pendingConfirmations.slice(0, 1)).map(trip => {
                 const isDriver = trip.driverId === user?.id
                 const isLoading = confirming === trip.id
                 return (
@@ -81,6 +82,14 @@ export default function DashboardPage() {
                   </div>
                 )
               })}
+              {pendingConfirmations.length > 1 && (
+                <button
+                  onClick={() => setShowAllConfirmations(v => !v)}
+                  className="text-indigo-200 text-xs font-semibold text-left pt-1"
+                >
+                  {showAllConfirmations ? 'Ver menos' : `Ver ${pendingConfirmations.length - 1} más`}
+                </button>
+              )}
             </div>
           )}
         </div>
